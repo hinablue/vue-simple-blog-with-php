@@ -155,15 +155,44 @@ class Users extends \Blog\Model {
         return false;
     }
 
-    public function get() {
+    public function get($params = []) {
+        $params = array_merge([
+            'limit' => 10,
+            'page' => 1
+        ], $params);
+
         $users = [];
-        $statement = $this->db->prepare('SELECT `u`.* FROM `users` AS u WHERE `u`.`status` = :status LIMIT 10');
+        $status = 'actived';
+        $statement = $this->db->prepare('SELECT COUNT(`u`.`id`) AS count FROM `users` AS u WHERE `u`.`status` = :status');
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        if ($statement->execute()) {
+            $users = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+        }
+        if (count($users) === 0 || $users['count'] === 0) {
+            return false;
+        }
+
+        $totalItems = $users['count'];
+        $totalPages = ceil($users['count'] / $params['limit']);
+
+        if ($params['page'] > $totalPages || $params['page'] < 1) {
+            return false;
+        }
+
+        $users = [];
+        $statement = $this->db->prepare('SELECT `u`.* FROM `users` AS u WHERE `u`.`status` = :status OFFSET :offset LIMIT :limit');
+        $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        $statement->bindParam(':limit', $limit, \PDO::PARAM_INT);
+        $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
                 array_push($users, $row);
             }
         }
-        return count($users) > 0 ? $users : false;
+        return count($users) > 0 ? [
+            'items' => $users,
+            'totalItems' => $totalItems,
+            'totalPages' => $totalPages
+        ] : false;
     }
 }

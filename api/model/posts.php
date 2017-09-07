@@ -193,30 +193,92 @@ class Posts extends \Blog\Model {
         return false;
     }
 
-    public function search($title) {
-        $posts = [];
+    public function search($params = []) {
+        $params = array_merge([
+            'limit' => 10,
+            'page' => 1,
+            'q' => ''
+        ], $params);
+
+        if (empty($params['q'])) {
+            return false;
+        }
+
         $status = 'published';
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title LIMIT 10');
+        $posts = [];
+        $statement = $this->db->prepare('SELECT COUNT(`p`.`id`) AS count FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title');
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
-        $statement->bindParam(':title', $title, \PDO::PARAM_STR);
+        $statement->bindParam(':title', $params['q'], \PDO::PARAM_STR);
+        if ($statement->execute()) {
+            $posts = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+        }
+        if (count($posts) === 0 || $posts['count'] === 0) {
+            return false;
+        }
+
+        $totalItems = $posts['count'];
+        $totalPages = ceil($posts['count'] / $params['limit']);
+
+        if ($params['page'] > ceil($totalItems / $params['limit']) || $params['page'] < 1) {
+            return false;
+        }
+
+        $posts = [];
+        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title OFFSET :offset LIMIT :limit');
+        $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        $statement->bindParam(':title', $params['q'], \PDO::PARAM_STR);
+        $statement->bindParam(':limit', $limit, \PDO::PARAM_INT);
+        $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
                 array_push($posts, $row);
             }
         }
-        return count($posts) > 0 ? $posts : false;
+        return count($posts) > 0 ? [
+            'items' => $posts,
+            'totalItems' => $totalItems,
+            'totalPages' => $totalPages
+        ] : false;
     }
 
-    public function get() {
-        $posts = [];
+    public function get($params = []) {
+        $params = array_merge([
+            'limit' => 10,
+            'page' => 1
+        ], $params);
+
         $status = 'published';
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status LIMIT 10');
+        $posts = [];
+        $statement = $this->db->prepare('SELECT COUNT(`p`.`id`) AS count FROM `posts` AS p WHERE `p`.`status` = :status');
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        if ($statement->execute()) {
+            $posts = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+        }
+        if (count($posts) === 0 || $posts['count'] === 0) {
+            return false;
+        }
+
+        $totalItems = $posts['count'];
+        $totalPages = ceil($posts['count'] / $params['limit']);
+
+        if ($params['page'] > $totalPages || $params['page'] < 1) {
+            return false;
+        }
+
+        $posts = [];
+        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status OFFSET :offset LIMIT :limit');
+        $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        $statement->bindParam(':limit', $limit, \PDO::PARAM_INT);
+        $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
                 array_push($posts, $row);
             }
         }
-        return count($posts) > 0 ? $posts : false;
+        return count($posts) > 0 ? [
+            'items' => $posts,
+            'totalItems' => $totalItems,
+            'totalPages' => $totalPages
+        ] : false;
     }
 }
