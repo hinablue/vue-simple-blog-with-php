@@ -406,13 +406,13 @@ try {
         }
 
         switch(strtolower($_FILES['file']['type'])) {
-            //allowed file types
+            // Allowed file types
             case 'image/png':
             case 'image/gif':
             case 'image/jpeg':
             case 'image/pjpeg':
             case 'text/plain':
-            case 'text/html': //html file
+            case 'text/html':
             case 'application/x-zip-compressed':
             case 'application/pdf':
             case 'video/mp4':
