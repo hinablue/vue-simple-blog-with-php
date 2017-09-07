@@ -2,7 +2,7 @@
 
 namespace Blog\Model;
 
-use UserPosts;
+use Blog\Model\UserPosts;
 
 class Posts extends \Blog\Model {
 
@@ -31,7 +31,7 @@ class Posts extends \Blog\Model {
             if (false === $statement->execute()) {
                 $this->db->rollBack();
             }
-            $user_posts = new UserPosts();
+            $user_posts = new UserPosts($this->app);
             if (false === $user_posts->updateByPostId($post_id)) {
                 $this->db->rollBack();
             }
@@ -99,7 +99,7 @@ class Posts extends \Blog\Model {
                     }
                 }
             }
-            $user_posts = new UserPosts();
+            $user_posts = new UserPosts($this->app);
             if (false === $user_posts->updateByPostId($data['post_id'])) {
                 $this->db->rollBack();
             }
@@ -119,8 +119,8 @@ class Posts extends \Blog\Model {
                 $alias = $this->uuid($id, microtime());
             }
 
-            $html = $data['markdown'];
-            $status = $data['published'] ? 'published' : 'draft';
+            $html = $data['html'];
+            $status = isset($data['published']) ? 'published' : 'draft';
 
             $statement = $this->db->prepare(
                 'INSERT INTO `posts` (`id`,`alias`,`title`,`markdown`,`html`,`status`) VALUES' .
@@ -139,7 +139,7 @@ class Posts extends \Blog\Model {
             if (isset($data['files']) && is_array($data['files'])) {
                 foreach($files as $file) {
                     $statement = $this->db->prepare('INSERT INTO `post_files` (`post_id`,`file_id`) VALUES (:post_id, :file_id)');
-                    $statement->bindParam(':post_id', $post_id, \PDO::PARAM_STR);
+                    $statement->bindParam(':post_id', $id, \PDO::PARAM_STR);
                     $statement->bindParam(':file_id', $file_id, \PDO::PARAM_STR);
                     if (false === $statement->execute()) {
                         $this->db->rollBack();
@@ -147,8 +147,8 @@ class Posts extends \Blog\Model {
                 }
             }
 
-            $user_posts = new UserPosts();
-            if (false === $user_posts->add()) {
+            $user_posts = new UserPosts($this->app);
+            if (false === $user_posts->add($id, $this->app->auth['id'])) {
                 $this->db->rollBack();
             }
             $this->db->commit();
@@ -204,6 +204,9 @@ class Posts extends \Blog\Model {
             return false;
         }
 
+        $params['page'] = (int) $params['page'];
+        $params['limit'] = (int) $params['limit'];
+
         $status = 'published';
         $posts = [];
         $statement = $this->db->prepare('SELECT COUNT(`p`.`id`) AS count FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title');
@@ -212,22 +215,23 @@ class Posts extends \Blog\Model {
         if ($statement->execute()) {
             $posts = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
         }
-        if (count($posts) === 0 || $posts['count'] === 0) {
+        if (count($posts) === 0 || (int) $posts['count'] === 0) {
             return false;
         }
 
-        $totalItems = $posts['count'];
-        $totalPages = ceil($posts['count'] / $params['limit']);
+        $totalItems = (int) $totalItems;
+        $totalPages = (int) ceil($totalItems / $params['limit']);
 
         if ($params['page'] > ceil($totalItems / $params['limit']) || $params['page'] < 1) {
             return false;
         }
 
+        $offset = ($params['page'] - 1) * $params['limit'];
         $posts = [];
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title OFFSET :offset LIMIT :limit');
+        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title LIMIT :limit OFFSET :offset');
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         $statement->bindParam(':title', $params['q'], \PDO::PARAM_STR);
-        $statement->bindParam(':limit', $limit, \PDO::PARAM_INT);
+        $statement->bindParam(':limit', $params['limit'], \PDO::PARAM_INT);
         $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
@@ -247,6 +251,9 @@ class Posts extends \Blog\Model {
             'page' => 1
         ], $params);
 
+        $params['page'] = (int) $params['page'];
+        $params['limit'] = (int) $params['limit'];
+
         $status = 'published';
         $posts = [];
         $statement = $this->db->prepare('SELECT COUNT(`p`.`id`) AS count FROM `posts` AS p WHERE `p`.`status` = :status');
@@ -254,21 +261,23 @@ class Posts extends \Blog\Model {
         if ($statement->execute()) {
             $posts = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
         }
+
         if (count($posts) === 0 || $posts['count'] === 0) {
             return false;
         }
 
-        $totalItems = $posts['count'];
-        $totalPages = ceil($posts['count'] / $params['limit']);
+        $totalItems = (int) $posts['count'];
+        $totalPages = (int) ceil($totalItems / $params['limit']);
 
         if ($params['page'] > $totalPages || $params['page'] < 1) {
             return false;
         }
 
+        $offset = ($params['page'] - 1) * $params['limit'];
         $posts = [];
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status OFFSET :offset LIMIT :limit');
+        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status LIMIT :limit OFFSET :offset');
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
-        $statement->bindParam(':limit', $limit, \PDO::PARAM_INT);
+        $statement->bindParam(':limit', $params['limit'], \PDO::PARAM_INT);
         $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {

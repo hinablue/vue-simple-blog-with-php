@@ -2,6 +2,8 @@
 
 namespace Blog\Model;
 
+use Users;
+
 class Files extends \Blog\Model {
 
     protected $root = '00000000-9999-2222-3333-000000000000';
@@ -19,6 +21,16 @@ class Files extends \Blog\Model {
             if (false === $statement->execute()) {
                 $this->db->rollBack();
             }
+
+            if ($data['isAvatar']) {
+                $statement = $this->db->prepare('UPDATE `users` SET `avatar` = :avatar WHERE `id` = :user_id LIMIT 1');
+                $statement->bindParam(':user_id', $this->app->auth['id'], \PDO::PARAM_STR);
+                $statement->bindParam(':avatar', $id, \PDO::PARAM_STR);
+                if (false === $statement->execute()) {
+                    $this->db->rollBack();
+                }
+            }
+
             $this->db->commit();
             return [
                 'id' => $id,

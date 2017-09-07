@@ -90,6 +90,9 @@ class Users extends \Blog\Model {
             if (isset($data['email']) && !empty($data['email'])) {
                 array_push($prepare, ' `email` = :email');
             }
+            if (isset($data['avatar']) && !empty($data['avatar'])) {
+                array_push($prepare, ' `avatar` = :avatar');
+            }
 
             $prepare = impolode(', ', $prepare) . ' WHERE user_id = :user_id LIMIT 1';
 
@@ -102,6 +105,9 @@ class Users extends \Blog\Model {
             }
             if (isset($data['email']) && !empty($data['email'])) {
                 $statement->bindParam(':email', $data['email'], \PDO::PARAM_STR);
+            }
+            if (isset($data['avatar']) && !empty($data['avatar'])) {
+                $statement->bindParam(':avatar', $data['avatar'], \PDO::PARAM_STR);
             }
             $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
@@ -141,8 +147,6 @@ class Users extends \Blog\Model {
             $this->db->commit();
             return $id;
         } catch (\PDOException $e) {
-            var_dump($e->getMessage());
-            exit;
             return false;
         }
     }
@@ -193,21 +197,22 @@ class Users extends \Blog\Model {
         if ($statement->execute()) {
             $users = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
         }
-        if (count($users) === 0 || $users['count'] === 0) {
+        if (count($users) === 0 || (int) $users['count'] === 0) {
             return false;
         }
 
-        $totalItems = $users['count'];
-        $totalPages = ceil($users['count'] / $params['limit']);
+        $totalItems = (int) $users['count'];
+        $totalPages = ceil((int) $users['count'] / (int) $params['limit']);
 
-        if ($params['page'] > $totalPages || $params['page'] < 1) {
+        if ((int) $params['page'] > $totalPages || (int) $params['page'] < 1) {
             return false;
         }
 
+        $offset = ((int) $params['page'] - 1) * (int) $params['limit'];
         $users = [];
-        $statement = $this->db->prepare('SELECT `u`.* FROM `users` AS u WHERE `u`.`status` = :status OFFSET :offset LIMIT :limit');
+        $statement = $this->db->prepare('SELECT `u`.* FROM `users` AS u WHERE `u`.`status` = :status LIMIT :limit OFFSET :offset');
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
-        $statement->bindParam(':limit', $limit, \PDO::PARAM_INT);
+        $statement->bindParam(':limit', (int) $params['limit'], \PDO::PARAM_INT);
         $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
@@ -216,8 +221,8 @@ class Users extends \Blog\Model {
         }
         return count($users) > 0 ? [
             'items' => $users,
-            'totalItems' => $totalItems,
-            'totalPages' => $totalPages
+            'totalItems' => (int) $totalItems,
+            'totalPages' => (int) $totalPages
         ] : false;
     }
 }

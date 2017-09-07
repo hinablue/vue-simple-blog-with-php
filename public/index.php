@@ -104,11 +104,27 @@ try {
 
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
 
-        $post = [
-            'title' => '',
-            'content' => ''
-        ];
+        if (!isset($data['title']) || empty($data['title'])) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Story title is empty'
+            ], 405];
+        }
+        if (!isset($data['markdown']) || empty($data['markdown']) ||
+            !isset($data['html']) || empty($data['html'])
+        ) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Story content is empty'
+            ], 405];
+        }
 
         $posts = new Posts($app);
         if ($posts->add($data)) {
@@ -134,6 +150,12 @@ try {
 
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
         $posts = new Posts($app);
         if ($posts->update($data)) {
             return [[
@@ -158,6 +180,12 @@ try {
 
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
         $posts = new Posts($app);
         if ($posts->delete($data['id'])) {
             return [[
@@ -226,6 +254,12 @@ try {
     $blog->post('/(signin|login)', function($app) {
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
         $users = new Users($app);
         if (false === ($user = $users->getByEmail($data['email']))) {
             return [[
@@ -253,6 +287,12 @@ try {
     $blog->post('/(register|signup)', function($app) {
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
 
         if (!isset($data['name']) ||
             empty($data['name'])
@@ -300,6 +340,12 @@ try {
     $blog->post('/forgotpassword', function($app) {
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
     });
 
     $blog->post('/changepassword', function($app) {
@@ -312,6 +358,12 @@ try {
 
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
         if (!isset($data['oldPassword']) ||
             empty($data['oldPassword'])
         ) {
@@ -367,6 +419,12 @@ try {
 
         $data = file_get_contents('php://input');
         $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
         $users = new Users($app);
         $results = $users->update($data);
         if (false === $results) {
@@ -453,7 +511,8 @@ try {
             $files = new Files($app);
             if (false !== ($file = $files->add([
                 'filename' => $filename,
-                'url' => DS . 'data' . DS . 'files' . DS . date('mY') . DS . date('d') . DS . $new_filename
+                'url' => DS . 'data' . DS . 'files' . DS . date('mY') . DS . date('d') . DS . $new_filename,
+                'isAvatar' => isset($_POST['isAvatar'])
             ]))) {
                 return [[
                     'status' => 'ok',

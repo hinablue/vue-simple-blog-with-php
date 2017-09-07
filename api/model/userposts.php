@@ -25,7 +25,7 @@ class UserPosts extends \Blog\Model {
         return count($posts) > 0 ? $posts : false;
     }
 
-    public function add($user_id, $post_id) {
+    public function add($post_id, $user_id) {
         $statement = $this->db->prepare('INSERT INTO `user_posts` (`user_id`,`post_id`) VALUES (:user_id,:post_id)');
         $statement->bindParam(':user_id', $user_id, \PDO::PARAM_STR);
         $statement->bindParam(':post_id', $post_id, \PDO::PARAM_STR);
