@@ -11,6 +11,7 @@ $configs = [
     'crypt' => [
         'cipher' => 'blowfish',
         'key' => 'OUYTRfghjncder%^&*()PKfrtyui76543edfghjjbdrtyuio0(*&^787654345678',
-        'iv' => '24499350'
+        'iv' => '24499350',
+        'lifetime' => 86400
     ]
 ];
