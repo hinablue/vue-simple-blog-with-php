@@ -39,11 +39,10 @@ try {
                     \PDO::ATTR_CASE => \PDO::CASE_LOWER
                 ]
             );
+            return $db;
         } catch (\Exception $e) {
             throw $e;
         }
-
-        return $db;
     });
 
     $blog = new App($di);
@@ -104,6 +103,7 @@ try {
         }
 
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
 
         $post = [
             'title' => '',
@@ -133,6 +133,7 @@ try {
         }
 
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
         $posts = new Posts($app);
         if ($posts->update($data)) {
             return [[
@@ -156,6 +157,7 @@ try {
         }
 
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
         $posts = new Posts($app);
         if ($posts->delete($data['id'])) {
             return [[
@@ -223,6 +225,7 @@ try {
 
     $blog->post('/(signin|login)', function($app) {
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
         $users = new Users($app);
         if (false === ($user = $users->getByEmail($data['email']))) {
             return [[
@@ -249,6 +252,7 @@ try {
 
     $blog->post('/(register|signup)', function($app) {
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
 
         if (!isset($data['name']) ||
             empty($data['name'])
@@ -282,14 +286,20 @@ try {
                 'messages' => 'Method not allow'
             ], 405];
         }
+        $user = $users->getByEmail($data['email']);
+        unset($user['password']);
+
         return [[
             'status' => 'ok',
-            'messages' => 'User create succeeded'
+            'messages' => 'User create succeeded',
+            'results' => $user,
+            'authorization' => $user['id']
         ], 200];
     });
 
     $blog->post('/forgotpassword', function($app) {
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
     });
 
     $blog->post('/changepassword', function($app) {
@@ -301,6 +311,7 @@ try {
         }
 
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
         if (!isset($data['oldPassword']) ||
             empty($data['oldPassword'])
         ) {
@@ -355,6 +366,7 @@ try {
         }
 
         $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
         $users = new Users($app);
         $results = $users->update($data);
         if (false === $results) {
@@ -429,8 +441,8 @@ try {
                 ], 405];
         }
 
-        $directory = ROOT . DS . 'data' . DS . 'files' . DS . date('mY') . DS . date('d');
-        if (!exists($directory)) {
+        $directory = ROOT . DS . 'public' . DS . 'data' . DS . 'files' . DS . date('mY') . DS . date('d');
+        if (!file_exists($directory)) {
             mkdir($directory, 0755, true);
         }
         $filename = $_FILES['file']['name'];
