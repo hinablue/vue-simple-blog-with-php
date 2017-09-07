@@ -48,6 +48,8 @@ try {
 
     $blog = new App($di);
 
+    $blog->setPrefix('/api');
+
     $blog->get('/', function($app) {
         $posts = new Posts($app);
         $results = $posts->get();
@@ -69,7 +71,10 @@ try {
     $blog->get('/search', function($app) {
         if (isset($_GET['q']) && !empty($_GET['q'])) {
             $posts = new Posts($app);
-            $results = $posts->search(urldecode($_GET['q']));
+            $results = $posts->search([
+                'page' => isset($_GET['page']) ? (int) $_GET['page'] : 1,
+                'q' => urldecode($_GET['q'])
+            ]);
             if ($results) {
                 return [[
                     'status' => 'ok',

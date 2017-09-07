@@ -7,6 +7,7 @@ use \Blog\Model\Users;
 final class App {
     protected $path = [];
     protected $auth = NULL;
+    protected $prefix = '';
 
     public function __construct(\Blog\Vendor\Di $di) {
         $this->di = $di;
@@ -133,12 +134,16 @@ final class App {
         }
     }
 
+    public function setPrefix($prefix = '') {
+        $this->prefix = $prefix;
+    }
+
     public function get($path, $controller) {
         if (empty($path) || !is_callable($controller)) {
             throw \Exception('Path cannot empty or callback is not an function.');
         }
         array_push($this->path['get'], [
-            'path' => $path,
+            'path' => $this->prefix . $path,
             'controller' => $controller
         ]);
         return $this;
@@ -148,7 +153,7 @@ final class App {
             throw \Exception('Path cannot empty or callback is not an function.');
         }
         array_push($this->path['post'], [
-            'path' => $path,
+            'path' => $this->prefix . $path,
             'controller' => $controller
         ]);
         return $this;
@@ -158,7 +163,7 @@ final class App {
             throw \Exception('Path cannot empty or callback is not an function.');
         }
         array_push($this->path['put'], [
-            'path' => $path,
+            'path' => $this->prefix . $path,
             'controller' => $controller
         ]);
         return $this;
@@ -168,7 +173,7 @@ final class App {
             throw \Exception('Path cannot empty or callback is not an function.');
         }
         array_push($this->path['delete'], [
-            'path' => $path,
+            'path' => $this->prefix . $path,
             'controller' => $controller
         ]);
         return $this;
@@ -178,7 +183,7 @@ final class App {
             throw \Exception('Path cannot empty or callback is not an function.');
         }
         array_push($this->path['options'], [
-            'path' => $path,
+            'path' => $this->prefix . $path,
             'controller' => $controller
         ]);
         return $this;
