@@ -38,13 +38,21 @@ final class App {
 
     public function run() {
         $method = strtolower($_SERVER['REQUEST_METHOD']);
+
+        if ($method !== 'get' && !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
+            return $this->response([[
+                'status' => 'error',
+                'messages' => 'Method Not Allow'
+            ], 405]);
+        }
+
         $url = urldecode(urlencode($_SERVER['REQUEST_URI']));
+
         if (substr($url, 0, 1) !== '/') {
             $url = '/' . $url;
         }
 
         if (!isset($this->path[$method])) {
-            // 405
             return $this->response([[
                 'status' => 'error',
                 'messages' => 'Method Not Allow'
@@ -87,7 +95,7 @@ final class App {
                 $authorization['ua'] === $headers['User-Agent'] &&
                 $authorization['exp'] > time()
             ) {
-                $users = new Users($this->di);
+                $users = new Users($this);
                 if (false !== ($user = $users->findById($authorization['user_id']))) {
                     $this->auth = $user;
                 }
@@ -174,5 +182,28 @@ final class App {
             'controller' => $controller
         ]);
         return $this;
+    }
+
+    // UUID v5.
+    public function uuid($namespace, $name) {
+        if (!self::is_valid($namespace)) return false;
+        $nhex = str_replace(array('-','{','}'), '', $namespace);
+        $nstr = '';
+        for ($i = 0; $i < strlen($nhex); $i += 2) {
+            $nstr .= chr(hexdec($nhex[$i].$nhex[$i+1]));
+        }
+        $hash = sha1($nstr . $name);
+        return sprintf('%08s-%04s-%04x-%04x-%12s',
+            substr($hash, 0, 8),
+            substr($hash, 8, 4),
+            (hexdec(substr($hash, 12, 4)) & 0x0fff) | 0x5000,
+            (hexdec(substr($hash, 16, 4)) & 0x3fff) | 0x8000,
+            substr($hash, 20, 12)
+        );
+    }
+
+    protected function is_valid($uuid) {
+        return preg_match('/^\{?[0-9a-f]{8}\-?[0-9a-f]{4}\-?[0-9a-f]{4}\-?'.
+            '[0-9a-f]{4}\-?[0-9a-f]{12}\}?$/i', $uuid) === 1;
     }
 }
