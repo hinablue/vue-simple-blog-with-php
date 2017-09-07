@@ -95,6 +95,12 @@ final class App {
         }
 
         $route = array_shift($route);
+        if (!is_callable($route['controller'])) {
+            return $this->response([[
+                'status' => 'error',
+                'messages' => 'Method Not Allow'
+            ], 405]);
+        }
         if ($route['path'] === $url) {
             return $this->response(
                 call_user_func($route['controller'], $this)
