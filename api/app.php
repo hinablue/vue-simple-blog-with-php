@@ -47,7 +47,8 @@ final class App {
             ], 405]);
         }
 
-        $url = urldecode(urlencode($_SERVER['REQUEST_URI']));
+        $url = strtok(urldecode(urlencode($_SERVER['REQUEST_URI'])), '#');
+        $url = strtok($url, '?');
 
         if (substr($url, 0, 1) !== '/') {
             $url = '/' . $url;
