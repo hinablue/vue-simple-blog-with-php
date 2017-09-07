@@ -4,7 +4,7 @@ CREATE TABLE `vue-blog`.`users` (
 `name` VARCHAR(50) NOT NULL,
 `email` VARCHAR(200) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
 `password` VARCHAR(64) CHARACTER SET utf8 COLLATE utf8_general_ci NOT NULL,
-`avatar` VARCHAR(200) CHARACTER SET utf8 COLLATE utf8_general_ci NULL,
+`avatar` VARCHAR(36) CHARACTER SET utf8 COLLATE utf8_general_ci NULL,
 `status` ENUM('actived','deleted') CHARACTER SET utf8 COLLATE utf8_general_ci NULL DEFAULT 'actived',
 `created_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
 `updated_at` DATETIME NULL DEFAULT CURRENT_TIMESTAMP,
