@@ -113,10 +113,10 @@ class Posts extends \Blog\Model {
     public function add($data = []) {
         $this->db->beginTransaction();
         try {
-            $id = $this->uuid($this->root, microtiem());
+            $id = $this->uuid($this->root, microtime());
             $alias = $this->sulgify($data['title']);
             if (empty($alias)) {
-                $alias = $this->uuid($id, microtiem());
+                $alias = $this->uuid($id, microtime());
             }
 
             $html = $data['markdown'];

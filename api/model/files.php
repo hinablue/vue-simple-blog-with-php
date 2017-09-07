@@ -9,7 +9,7 @@ class Files extends \Blog\Model {
     public function add($data) {
         $this->db->beginTransaction();
         try {
-            $id = $this->uuid($this->root, microtiem());
+            $id = $this->uuid($this->root, microtime());
 
             $statement = $this->db->prepare('INSERT INTO `files` (`id`,`user_id`,`filename`,`url`) VALUES (:id,:user_id,:filename,:url)');
             $statement->bindParam(':id', $id, \PDO::PARAM_STR);

@@ -119,16 +119,16 @@ class Users extends \Blog\Model {
     public function add($data = []) {
         $this->db->beginTransaction();
         try {
-            $id = $this->uuid($this->root, microtiem());
+            $id = $this->uuid($this->root, microtime());
             $alias = $this->sulgify($data['name']);
             if (empty($alias)) {
-                $alias = $this->uuid($id, microtiem());
+                $alias = $this->uuid($id, microtime());
             }
 
             $password = password_hash($data['password'], PASSWORD_BCRYPT);
             $status = 'actived';
 
-            $statement = $this->db->prepare('INSERT INTO `users` (`id`,`alias`,`name`,`email`,`password`,`status`) VALUES (:id,:alias,:email,:password,:status)');
+            $statement = $this->db->prepare('INSERT INTO `users` (`id`,`alias`,`name`,`email`,`password`,`status`) VALUES (:id,:alias,:name,:email,:password,:status)');
             $statement->bindParam(':id', $id, \PDO::PARAM_STR);
             $statement->bindParam(':alias', $alias, \PDO::PARAM_STR);
             $statement->bindParam(':name', $data['name'], \PDO::PARAM_STR);
@@ -141,6 +141,8 @@ class Users extends \Blog\Model {
             $this->db->commit();
             return $id;
         } catch (\PDOException $e) {
+            var_dump($e->getMessage());
+            exit;
             return false;
         }
     }
