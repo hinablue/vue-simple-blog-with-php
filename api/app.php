@@ -6,8 +6,10 @@ use \Blog\Model\Users;
 
 final class App {
     protected $path = [];
-    protected $auth = NULL;
     protected $prefix = '';
+    protected $headers = [];
+
+    public $auth = NULL;
 
     public function __construct(\Blog\Vendor\Di $di) {
         $this->di = $di;
@@ -34,19 +36,26 @@ final class App {
         } else {
             http_response_code($res[1]);
         }
+
+        if (isset($res[0]['authorization']) && !empty($res[0]['authorization'])) {
+            $res[0]['token'] = base64_encode(openssl_encrypt(
+                json_encode([
+                    'user_id' => $res[0]['authorization'],
+                    'ua' => $this->headers['User-Agent'],
+                    'exp' => time() + $this->di->config->crypt['lifetime']
+                ]),
+                $this->di->config->crypt['cipher'],
+                $this->di->config->crypt['key'],
+                OPENSSL_RAW_DATA,
+                $this->di->config->crypt['iv']
+            ));
+            unset($res[0]['authorization']);
+        }
         echo json_encode($res[0], JSON_UNESCAPED_UNICODE);
     }
 
     public function run() {
         $method = strtolower($_SERVER['REQUEST_METHOD']);
-
-        if ($method !== 'get' && !isset($_SERVER['HTTP_X_REQUESTED_WITH'])) {
-            return $this->response([[
-                'status' => 'error',
-                'messages' => 'Method Not Allow'
-            ], 405]);
-        }
-
         $url = strtok(urldecode(urlencode($_SERVER['REQUEST_URI'])), '#');
         $url = strtok($url, '?');
 
@@ -77,28 +86,29 @@ final class App {
             ], 405]);
         }
         // Fetch headers with auth.
-        $headers = [];
+        $this->headers = [];
         foreach ($_SERVER as $name => $value) {
             if (substr($name, 0, 5) === 'HTTP_') {
-                $headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
+                $this->headers[str_replace(' ', '-', ucwords(strtolower(str_replace('_', ' ', substr($name, 5)))))] = $value;
             }
         }
 
-        if (isset($headers['Authorization'])) {
-            $token = substr('Bearer ', '', $headers['Authorization']);
+        if (isset($this->headers['Authorization'])) {
+            $token = str_replace('Bearer ', '', $this->headers['Authorization']);
             $authorization = json_decode(openssl_decrypt(
-                base64_decode($hash),
+                base64_decode($token),
                 $this->di->config->crypt['cipher'],
                 $this->di->config->crypt['key'],
                 OPENSSL_RAW_DATA,
                 $this->di->config->crypt['iv']
-            ));
+            ), true);
+
             if (!is_null($authorization) && is_array($authorization) &&
-                $authorization['ua'] === $headers['User-Agent'] &&
+                $authorization['ua'] === $this->headers['User-Agent'] &&
                 $authorization['exp'] > time()
             ) {
                 $users = new Users($this);
-                if (false !== ($user = $users->findById($authorization['user_id']))) {
+                if (false !== ($user = $users->getById($authorization['user_id']))) {
                     $this->auth = $user;
                 }
             }
