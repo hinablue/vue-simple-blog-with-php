@@ -7,8 +7,8 @@ class Users extends \Blog\Model {
     protected $root = '00000000-6666-2222-3333-000000000000';
 
     public function delete($user_id) {
-        $status = 'deleted';
-        $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` != :status LIMIT 1');
+        $status = 'actived';
+        $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` = :status LIMIT 1');
         $statement->bindParam(':user_id', $user_id, \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if (false === $statement->execute()) {
@@ -38,9 +38,38 @@ class Users extends \Blog\Model {
         }
     }
 
+    public function changePassword($data = []) {
+        $status = 'actived';
+        $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` = :status LIMIT 1');
+        $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
+        $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        if (false === $statement->execute()) {
+            return false;
+        }
+        if (false === $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+            return false;
+        }
+        $this->db->beginTransaction();
+        try {
+            $password = password_hash($data['newPassword'], PASSWORD_BCRYPT);
+
+            $statement = $this->db->prepare('UPDATE `users` SET `password` = :password WHERE `id` = :user_id LIMIT 1');
+            $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
+            $statement->bindParam(':password', $password, \PDO::PARAM_STR);
+            if (false === $statement->execute()) {
+                $this->db->rollBack();
+            }
+            $this->db->commit();
+            return true;
+        } catch (\PDOException $e) {
+            return false;
+        }
+    }
+
     public function update($data = []) {
-        $status = 'deleted';
-        $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` != :status LIMIT 1');
+        $status = 'actived';
+        $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` = :status LIMIT 1');
         $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if (false === $statement->execute()) {
@@ -61,9 +90,6 @@ class Users extends \Blog\Model {
             if (isset($data['email']) && !empty($data['email'])) {
                 array_push($prepare, ' `email` = :email');
             }
-            if (isset($data['password']) && !empty($data['password'])) {
-                array_push($prepare, ' `password` = :password');
-            }
 
             $prepare = impolode(', ', $prepare) . ' WHERE user_id = :user_id LIMIT 1';
 
@@ -77,12 +103,9 @@ class Users extends \Blog\Model {
             if (isset($data['email']) && !empty($data['email'])) {
                 $statement->bindParam(':email', $data['email'], \PDO::PARAM_STR);
             }
-            if (isset($data['password']) && !empty($data['password'])) {
-                $password = password_hash($data['password'], PASSWORD_BCRYPT);
-                $statement->bindParam(':password', $password, \PDO::PARAM_STR);
-            }
             $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
             $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
+
             if (false === $statement->execute()) {
                 $this->db->rollBack();
             }
