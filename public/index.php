@@ -380,6 +380,77 @@ try {
         ], 200];
     });
 
+    $blog->post('/fileuploader', function($app) {
+        if (is_null($app->auth)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Need login'
+            ], 403];
+        }
+
+        if (!isset($_FILES['file']) ||
+            count($_FILES['file']) === 0
+        ) {
+            return [[
+                'status' => 'error',
+                'messages' => 'No file to upload'
+            ], 405];
+        }
+
+        // Limit to 5MB file.
+        if ($_FILES['file']['size'] > 5 * 1024 * 1204) {
+            return [[
+                'status' => 'error',
+                'messages' => 'File is too large (over 5MB)'
+            ], 405];
+        }
+
+        switch(strtolower($_FILES['file']['type'])) {
+            //allowed file types
+            case 'image/png':
+            case 'image/gif':
+            case 'image/jpeg':
+            case 'image/pjpeg':
+            case 'text/plain':
+            case 'text/html': //html file
+            case 'application/x-zip-compressed':
+            case 'application/pdf':
+            case 'video/mp4':
+                break;
+            default:
+                return [[
+                    'status' => 'error',
+                    'messages' => 'File type is not allow'
+                ], 405];
+        }
+
+        $directory = ROOT . DS . 'data' . DS . 'files' . DS . date('mY') . DS . date('d');
+        if (!exists($directory)) {
+            mkdir($directory, 0755, true);
+        }
+        $filename = $_FILES['file']['name'];
+        $extension = substr($filename, strrpos($filename, '.'));
+        $new_filename = $app->uuid('00000000-5566-5566-5566-000000000000', microtime()) . $extension;
+
+        if (move_uploaded_file($_FILES['file']['tmp_name'], $directory . DS . $new_filename)) {
+            $files = new Files($app);
+            if (false !== ($file = $files->add([
+                'filename' => $filename,
+                'url' => DS . 'data' . DS . 'files' . DS . date('mY') . DS . date('d') . DS . $new_filename
+            ]))) {
+                return [[
+                    'status' => 'ok',
+                    'messages' => 'Succeeded',
+                    'results' => $file
+                ], 200];
+            }
+        }
+        return [[
+            'status' => 'error',
+            'messages' => 'File upload failed'
+        ], 405];
+    });
+
     echo $blog->run();
 } catch (\Exception $e) {
     $datetime = gmdate("D, d M Y H:i:s").' GMT';
