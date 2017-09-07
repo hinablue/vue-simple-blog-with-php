@@ -235,6 +235,7 @@ class Posts extends \Blog\Model {
         $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+                $row['text'] = str_replace(["\n", "\r", "\r\n"], ' ', strip_tags($row['html']));
                 array_push($posts, $row);
             }
         }
@@ -281,6 +282,7 @@ class Posts extends \Blog\Model {
         $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+                $row['text'] = str_replace(["\n", "\r", "\r\n"], ' ', strip_tags($row['html']));
                 array_push($posts, $row);
             }
         }

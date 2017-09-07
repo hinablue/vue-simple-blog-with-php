@@ -200,7 +200,7 @@ try {
         }
     });
 
-    $blog->get('/entry/(:alias[a-z0-9\-_]+)', function($di, $alias) {
+    $blog->get('/entry/(:alias[a-z0-9\-_]+)', function($app, $alias) {
         $posts = new Posts($app);
         $results = $posts->getByAlias($alias);
         if ($results) {
@@ -217,7 +217,7 @@ try {
         }
     });
 
-    $blog->get('/user/(:alias[a-z0-9\-_]+)', function($di, $alias) {
+    $blog->get('/user/(:alias[a-z0-9\-_]+)', function($app, $alias) {
         $users = new Users($app);
         $results = $users->getByAlias($alias);
         if ($results) {
@@ -234,7 +234,7 @@ try {
         }
     });
 
-    $blog->get('/user/(:alias[a-z0-9\-_]+)/entries', function($di, $alias) {
+    $blog->get('/user/(:alias[a-z0-9\-_]+)/entries', function($app, $alias) {
         $user_posts = new UserPosts($app);
         $results = $user_posts->getByUserAlias($alias);
         if ($results) {
