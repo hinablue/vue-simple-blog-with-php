@@ -14,16 +14,16 @@ abstract class Model {
     }
 
     public function sulgify ($string) {
-        $text = preg_replace('~[^\pL\d]+~u', '-', $text);
-        $text = iconv('utf-8', 'us-ascii//TRANSLIT', $text);
-        $text = preg_replace('~[^-\w]+~', '', $text);
-        $text = trim($text, '-');
-        $text = preg_replace('~-+~', '-', $text);
-        $text = strtolower($text);
-        if (empty($text)) {
+        $string = preg_replace('~[^\pL\d]+~u', '-', $string);
+        $string = iconv('utf-8', 'us-ascii//TRANSLIT', $string);
+        $string = preg_replace('~[^-\w]+~', '', $string);
+        $string = trim($string, '-');
+        $string = preg_replace('~-+~', '-', $string);
+        $string = strtolower($string);
+        if (empty($string)) {
             return '';
         }
-        return $text;
+        return $string;
     }
 
     public function uuid($namespace, $name) {
