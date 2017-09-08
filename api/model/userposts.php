@@ -33,15 +33,17 @@ class UserPosts extends \Blog\Model {
     }
 
     public function updateByPostId($post_id) {
+        $today = date('Y-m-d H:i:s');
         $statement = $this->db->prepare('UPDATE `user_posts` set `updated_at` = :updated_at WHERE `post_id` = :post_id LIMIT 1');
-        $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
+        $statement->bindParam(':updated_at', $today, \PDO::PARAM_STR);
         $statement->bindParam(':post_id', $post_id, \PDO::PARAM_STR);
         return $statement->execute();
     }
 
     public function updateByUserId($user_id) {
+        $today = date('Y-m-d H:i:s');
         $statement = $this->db->prepare('UPDATE `user_posts` set `updated_at` = :updated_at WHERE `user_id` = :user_id LIMIT 1');
-        $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
+        $statement->bindParam(':updated_at', $today, \PDO::PARAM_STR);
         $statement->bindParam(':user_id', $user_id, \PDO::PARAM_STR);
         return $statement->execute();
     }
