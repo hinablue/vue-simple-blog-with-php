@@ -31,6 +31,15 @@ class Files extends \Blog\Model {
                 }
             }
 
+            if ($data['isPost']) {
+                $statement = $this->db->prepare('INSERT INTO `post_files` (`post_id`,`file_id`) VALUES (:post_id, :file_id)');
+                $statement->bindParam(':post_id', $data['isPost'], \PDO::PARAM_STR);
+                $statement->bindParam(':file_id', $id, \PDO::PARAM_STR);
+                if (false === $statement->execute()) {
+                    $this->db->rollBack();
+                }
+            }
+
             $this->db->commit();
             return [
                 'id' => $id,

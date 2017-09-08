@@ -228,9 +228,9 @@ class Users extends \Blog\Model {
         $users = [];
         $statement = $this->db->prepare(
             implode(' ', ['SELECT `u`.`id`,`u`.`alias`,`u`.`name`,`u`.`email`,`u`.`password`,',
-            '`u`.`status`,`u`.`created_at`,`u`.`updated_at`, IFNULL(`f`.`url`, NULL) AS avatar',
-            'FROM `users` AS u ',
-            ' LEFT JOIN `files` AS f ON `f`.`user_id` = `u`.`id` AND `f`.`id` = `u`.`avatar`',
+            '`u`.`status`,`u`.`created_at`,`u`.`updated_at`,',
+            'IFNULL((SELECT `f`.`url` FROM `files` AS f WHERE `f`.`user_id` = `u`.`id` AND `f`.`id` = `u`.`avatar` LIMIT 1), NULL) AS avatar',
+            'FROM `users` AS u',
             'WHERE `u`.`id` = :user_id AND `u`.`status` = :status LIMIT :limit OFFSET :offset'])
         );
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
