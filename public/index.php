@@ -575,7 +575,8 @@ try {
             if (false !== ($file = $files->add([
                 'filename' => $filename,
                 'url' => DS . 'data' . DS . 'files' . DS . date('mY') . DS . date('d') . DS . $new_filename,
-                'isAvatar' => isset($_POST['isAvatar'])
+                'isAvatar' => isset($_POST['isAvatar']),
+                'isPost' => isset($_POST['isPost']) && !empty($_POST['isPost']) ? $_POST['isPost'] : false
             ]))) {
                 return [[
                     'status' => 'ok',
