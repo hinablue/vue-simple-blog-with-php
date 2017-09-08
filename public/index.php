@@ -51,7 +51,10 @@ try {
 
     $blog->get('/', function($app) {
         $posts = new Posts($app);
-        $results = $posts->get();
+
+        $results = $posts->get([
+            'page' => isset($_GET['page']) ? (int) $_GET['page'] : 1
+        ]);
 
         if ($results) {
             return [[
@@ -94,6 +97,216 @@ try {
         }
     });
 
+    $blog->get('/entry/(:alias[a-z0-9\-_]+)', function($app, $alias) {
+        $posts = new Posts($app);
+        $results = $posts->getByAlias($alias);
+        if ($results) {
+            return [[
+                'status' => 'ok',
+                'messages' => 'Succeeded',
+                'results' => $results
+            ], 200];
+        } else {
+            return [[
+                'status' => 'error',
+                'messages' => 'Posts not found'
+            ], 404];
+        }
+    });
+
+    $blog->get('/user/(:alias[a-z0-9\-_]+)', function($app, $alias) {
+        $users = new Users($app);
+        $results = $users->getByAlias($alias);
+        if ($results) {
+            return [[
+                'status' => 'ok',
+                'messages' => 'Succeeded',
+                'results' => $results
+            ], 200];
+        } else {
+            return [[
+                'status' => 'error',
+                'messages' => 'Posts not found'
+            ], 404];
+        }
+    });
+
+    $blog->get('/user/(:alias[a-z0-9\-_]+)/entries', function($app, $alias) {
+        $user_posts = new UserPosts($app);
+        $results = $user_posts->getByUserAlias($alias);
+        if ($results) {
+            return [[
+                'status' => 'ok',
+                'messages' => 'Succeeded',
+                'results' => $results
+            ], 200];
+        } else {
+            return [[
+                'status' => 'error',
+                'messages' => 'Posts not found'
+            ], 404];
+        }
+    });
+
+    $blog->post('/(signin|login)', function($app) {
+        $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
+        $users = new Users($app);
+        if (false === ($user = $users->getByEmail($data['email']))) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User not found'
+            ], 404];
+        }
+
+        if (false === password_verify($data['password'], $user['password'])) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User password or account is invalid'
+            ], 405];
+        }
+
+        unset($user['password']);
+
+        return [[
+            'status' => 'ok',
+            'messages' => 'User login succeeded',
+            'results' => $user,
+            'authorization' => $user['id']
+        ], 200];
+    });
+
+    $blog->post('/(register|signup)', function($app) {
+        $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
+
+        if (!isset($data['name']) ||
+            empty($data['name'])
+        ) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User name is empty'
+            ], 405];
+        }
+        if (!isset($data['email']) ||
+            empty($data['email'])
+        ) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User email is empty'
+            ], 405];
+        }
+        if (!isset($data['password']) ||
+            empty($data['password'])
+        ) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User password is empty'
+            ], 405];
+        }
+
+        $users = new Users($app);
+        if (false === $users->add($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Method not allow'
+            ], 405];
+        }
+        $user = $users->getByEmail($data['email']);
+        unset($user['password']);
+
+        return [[
+            'status' => 'ok',
+            'messages' => 'User create succeeded',
+            'results' => $user,
+            'authorization' => $user['id']
+        ], 200];
+    });
+
+    $blog->post('/forgotpassword', function($app) {
+        $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
+    });
+
+    $blog->post('/change_password', function($app) {
+        if (is_null($app->auth)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Need login'
+            ], 403];
+        }
+
+        $data = file_get_contents('php://input');
+        $data = json_decode($data, true);
+        if (empty($data) || !is_array($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Required data missing'
+            ], 405];
+        }
+        if (!isset($data['oldPassword']) ||
+            empty($data['oldPassword'])
+        ) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User oldPassword is empty'
+            ], 405];
+        }
+        if (!isset($data['newPassword']) ||
+            empty($data['newPassword'])
+        ) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User newPassword is empty'
+            ], 405];
+        }
+
+        $users = new Users($app);
+        if (false === ($user = $users->getById($app->auth['id']))) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User not found'
+            ], 404];
+        }
+
+        if (false === password_verify($data['oldPassword'], $user['password'])) {
+            return [[
+                'status' => 'error',
+                'messages' => 'User password is invalid'
+            ], 405];
+        }
+
+        if (false === $users->changePassword($data)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Method not allow'
+            ], 405];
+        }
+        return [[
+            'status' => 'ok',
+            'messages' => 'User change password succeeded'
+        ], 200];
+    });
+
+    // Need login below.
     $blog->put('/entry/add', function($app) {
         if (is_null($app->auth)) {
             return [[
@@ -200,155 +413,7 @@ try {
         }
     });
 
-    $blog->get('/entry/(:alias[a-z0-9\-_]+)', function($app, $alias) {
-        $posts = new Posts($app);
-        $results = $posts->getByAlias($alias);
-        if ($results) {
-            return [[
-                'status' => 'ok',
-                'messages' => 'Succeeded',
-                'results' => $results
-            ], 200];
-        } else {
-            return [[
-                'status' => 'error',
-                'messages' => 'Posts not found'
-            ], 404];
-        }
-    });
-
-    $blog->get('/user/(:alias[a-z0-9\-_]+)', function($app, $alias) {
-        $users = new Users($app);
-        $results = $users->getByAlias($alias);
-        if ($results) {
-            return [[
-                'status' => 'ok',
-                'messages' => 'Succeeded',
-                'results' => $results
-            ], 200];
-        } else {
-            return [[
-                'status' => 'error',
-                'messages' => 'Posts not found'
-            ], 404];
-        }
-    });
-
-    $blog->get('/user/(:alias[a-z0-9\-_]+)/entries', function($app, $alias) {
-        $user_posts = new UserPosts($app);
-        $results = $user_posts->getByUserAlias($alias);
-        if ($results) {
-            return [[
-                'status' => 'ok',
-                'messages' => 'Succeeded',
-                'results' => $results
-            ], 200];
-        } else {
-            return [[
-                'status' => 'error',
-                'messages' => 'Posts not found'
-            ], 404];
-        }
-    });
-
-    $blog->post('/(signin|login)', function($app) {
-        $data = file_get_contents('php://input');
-        $data = json_decode($data, true);
-        if (empty($data) || !is_array($data)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'Required data missing'
-            ], 405];
-        }
-        $users = new Users($app);
-        if (false === ($user = $users->getByEmail($data['email']))) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User not found'
-            ], 404];
-        }
-
-        if (false === password_verify($data['password'], $user->password)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User password or account is invalid'
-            ], 405];
-        }
-
-        unset($user['password']);
-
-        return [[
-            'status' => 'ok',
-            'messages' => 'User create succeeded',
-            'results' => $user
-        ], 200];
-    });
-
-    $blog->post('/(register|signup)', function($app) {
-        $data = file_get_contents('php://input');
-        $data = json_decode($data, true);
-        if (empty($data) || !is_array($data)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'Required data missing'
-            ], 405];
-        }
-
-        if (!isset($data['name']) ||
-            empty($data['name'])
-        ) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User name is empty'
-            ], 405];
-        }
-        if (!isset($data['email']) ||
-            empty($data['email'])
-        ) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User email is empty'
-            ], 405];
-        }
-        if (!isset($data['password']) ||
-            empty($data['password'])
-        ) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User password is empty'
-            ], 405];
-        }
-
-        $users = new Users($app);
-        if (false === $users->add($data)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'Method not allow'
-            ], 405];
-        }
-        $user = $users->getByEmail($data['email']);
-        unset($user['password']);
-
-        return [[
-            'status' => 'ok',
-            'messages' => 'User create succeeded',
-            'results' => $user,
-            'authorization' => $user['id']
-        ], 200];
-    });
-
-    $blog->post('/forgotpassword', function($app) {
-        $data = file_get_contents('php://input');
-        $data = json_decode($data, true);
-        if (empty($data) || !is_array($data)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'Required data missing'
-            ], 405];
-        }
-    });
-
-    $blog->post('/changepassword', function($app) {
+    $blog->get('/my/entries', function($app) {
         if (is_null($app->auth)) {
             return [[
                 'status' => 'error',
@@ -356,57 +421,23 @@ try {
             ], 403];
         }
 
-        $data = file_get_contents('php://input');
-        $data = json_decode($data, true);
-        if (empty($data) || !is_array($data)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'Required data missing'
-            ], 405];
-        }
-        if (!isset($data['oldPassword']) ||
-            empty($data['oldPassword'])
-        ) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User oldPassword is empty'
-            ], 405];
-        }
-        if (!isset($data['newPassword']) ||
-            empty($data['newPassword'])
-        ) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User newPassword is empty'
-            ], 405];
-        }
+        $posts = new Posts($app);
+        $results = $posts->getByAuthor([
+            'page' => isset($_GET['page']) ? (int) $_GET['page'] : 1
+        ]);
 
-        $users = new Users($app);
-        if (false === ($user = $users->getId($auth['user_id']))) {
+        if ($results) {
+            return [[
+                'status' => 'ok',
+                'messages' => 'Succeeded',
+                'results' => $results
+            ], 200];
+        } else {
             return [[
                 'status' => 'error',
-                'messages' => 'User not found'
+                'messages' => 'Posts not found'
             ], 404];
         }
-
-        if (false === password_verify($data['oldPassword'], $user->password)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'User password is invalid'
-            ], 405];
-        }
-
-        $data['user_id'] = $users->id;
-        if (false === $users->changePassword($data)) {
-            return [[
-                'status' => 'error',
-                'messages' => 'Method not allow'
-            ], 405];
-        }
-        return [[
-            'status' => 'ok',
-            'messages' => 'User create succeeded'
-        ], 200];
     });
 
     $blog->post('/profile', function($app) {
@@ -440,18 +471,50 @@ try {
     });
 
     $blog->get('/profile', function($app) {
+        if (is_null($app->auth)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Need login'
+            ], 403];
+        }
+
         $users = new Users($app);
-        $user = $users->getById($data);
+        $user = $users->getById($app->auth['id']);
         if (false === $user) {
             return [[
                 'status' => 'error',
                 'messages' => 'Method not allow'
             ], 405];
         }
+        unset($user['password']);
+
         return [[
             'status' => 'ok',
             'messages' => 'Succeeded',
             'results' => $user
+        ], 200];
+    });
+
+    $blog->get('/auth_check', function($app) {
+        if (is_null($app->auth)) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Need login'
+            ], 403];
+        }
+        $users = new Users($app);
+        if (false === ($user = $users->getById($app->auth['id']))) {
+            return [[
+                'status' => 'error',
+                'messages' => 'Need login'
+            ], 403];
+        }
+        unset($user['password']);
+
+        return [[
+            'status' => 'ok',
+            'messages' => 'Succeeded',
+            'authorization' => $user['id']
         ], 200];
     });
 
