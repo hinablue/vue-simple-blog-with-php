@@ -2,26 +2,29 @@
 
 namespace Blog\Model;
 
+use Blog\Model\Files;
+
 class Users extends \Blog\Model {
 
     protected $root = '00000000-6666-2222-3333-000000000000';
 
-    public function delete($user_id) {
+    public function delete() {
         $status = 'actived';
         $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` = :status LIMIT 1');
-        $statement->bindParam(':user_id', $user_id, \PDO::PARAM_STR);
+        $statement->bindParam(':user_id', $this->app->auth['id'], \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if (false === $statement->execute()) {
             return false;
         }
-        if (false === $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+        if (false === $statement->fetch(\PDO::FETCH_ASSOC)) {
             return false;
         }
         $this->db->beginTransaction();
         try {
+            $today = date('Y-m-d H:i:s');
             $statement = $this->db->prepare('UPDATE `posts` SET `status` = :deleted AND `updated_at` = :updated_at WHERE `id` = :user_id AND `status` != :status LIMIT 1');
-            $statement->bindParam(':user_id', $user_id, \PDO::PARAM_STR);
-            $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
+            $statement->bindParam(':user_id', $this->app->auth['id'], \PDO::PARAM_STR);
+            $statement->bindParam(':updated_at', $today, \PDO::PARAM_STR);
             $statement->bindParam(':deleted', $status, \PDO::PARAM_STR);
             $statement->bindParam(':status', $status, \PDO::PARAM_STR);
             if (false === $statement->execute()) {
@@ -41,21 +44,21 @@ class Users extends \Blog\Model {
     public function changePassword($data = []) {
         $status = 'actived';
         $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` = :status LIMIT 1');
-        $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
+        $statement->bindParam(':user_id', $this->app->auth['id'], \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if (false === $statement->execute()) {
             return false;
         }
-        if (false === $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+        if (false === $statement->fetch(\PDO::FETCH_ASSOC)) {
             return false;
         }
         $this->db->beginTransaction();
         try {
             $password = password_hash($data['newPassword'], PASSWORD_BCRYPT);
-
-            $statement = $this->db->prepare('UPDATE `users` SET `password` = :password WHERE `id` = :user_id LIMIT 1');
-            $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
-            $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
+            $today = date('Y-m-d H:i:s');
+            $statement = $this->db->prepare('UPDATE `users` SET `password` = :password, `updated_at` = :updated_at WHERE `id` = :user_id LIMIT 1');
+            $statement->bindParam(':updated_at', $today, \PDO::PARAM_STR);
+            $statement->bindParam(':user_id', $this->app->auth['id'], \PDO::PARAM_STR);
             $statement->bindParam(':password', $password, \PDO::PARAM_STR);
             if (false === $statement->execute()) {
                 $this->db->rollBack();
@@ -70,16 +73,17 @@ class Users extends \Blog\Model {
     public function update($data = []) {
         $status = 'actived';
         $statement = $this->db->prepare('SELECT `id` FROM `users` WHERE `id` = :user_id AND `status` = :status LIMIT 1');
-        $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
+        $statement->bindParam(':user_id', $this->app->auth['id'], \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if (false === $statement->execute()) {
             return false;
         }
-        if (false === $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+        if (false === $statement->fetch(\PDO::FETCH_ASSOC)) {
             return false;
         }
         $this->db->beginTransaction();
         try {
+            $today = date('Y-m-d H:i:s');
             $prepare = ['UPDATE `users` SET `updated_at` = :updated_at'];
             if (isset($data['alias']) && !empty($data['alias'])) {
                 array_push($prepare, ' `alias` = :alias');
@@ -90,11 +94,8 @@ class Users extends \Blog\Model {
             if (isset($data['email']) && !empty($data['email'])) {
                 array_push($prepare, ' `email` = :email');
             }
-            if (isset($data['avatar']) && !empty($data['avatar'])) {
-                array_push($prepare, ' `avatar` = :avatar');
-            }
 
-            $prepare = impolode(', ', $prepare) . ' WHERE user_id = :user_id LIMIT 1';
+            $prepare = implode(', ', $prepare) . ' WHERE `id` = :user_id LIMIT 1';
 
             $statement = $this->db->prepare($prepare);
             if (isset($data['alias']) && !empty($data['alias'])) {
@@ -106,11 +107,8 @@ class Users extends \Blog\Model {
             if (isset($data['email']) && !empty($data['email'])) {
                 $statement->bindParam(':email', $data['email'], \PDO::PARAM_STR);
             }
-            if (isset($data['avatar']) && !empty($data['avatar'])) {
-                $statement->bindParam(':avatar', $data['avatar'], \PDO::PARAM_STR);
-            }
-            $statement->bindParam(':updated_at', date('Y-m-d H:i:s'), \PDO::PARAM_STR);
-            $statement->bindParam(':user_id', $data['user_id'], \PDO::PARAM_STR);
+            $statement->bindParam(':updated_at', $today, \PDO::PARAM_STR);
+            $statement->bindParam(':user_id', $this->app->auth['id'], \PDO::PARAM_STR);
 
             if (false === $statement->execute()) {
                 $this->db->rollBack();
@@ -157,7 +155,11 @@ class Users extends \Blog\Model {
         $statement->bindParam(':email', $email, \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if ($statement->execute()) {
-            return $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+            $user = $statement->fetch(\PDO::FETCH_ASSOC);
+            if (empty($user['avatar'])) {
+                $user['avatar'] = '';
+            }
+            return $user;
         }
         return false;
     }
@@ -168,18 +170,32 @@ class Users extends \Blog\Model {
         $statement->bindParam(':alias', $alias, \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if ($statement->execute()) {
-            return $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+            $user = $statement->fetch(\PDO::FETCH_ASSOC);
+            if (empty($user['avatar'])) {
+                $user['avatar'] = '';
+            }
+            return $user;
         }
         return false;
     }
 
     public function getById($user_id) {
         $status = 'actived';
-        $statement = $this->db->prepare('SELECT `u`.* FROM `users` AS u WHERE `u`.`id` = :user_id AND `u`.`status` = :status LIMIT 1');
+        $statement = $this->db->prepare(
+            implode(' ', ['SELECT `u`.`id`,`u`.`alias`,`u`.`name`,`u`.`email`,`u`.`password`,',
+            '`u`.`status`,`u`.`created_at`,`u`.`updated_at`, IFNULL(`f`.`url`, NULL) AS avatar',
+            'FROM `users` AS u ',
+            ' LEFT JOIN `files` AS f ON `f`.`user_id` = `u`.`id` AND `f`.`id` = `u`.`avatar`',
+            'WHERE `u`.`id` = :user_id AND `u`.`status` = :status LIMIT 1'])
+        );
         $statement->bindParam(':user_id', $user_id, \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if ($statement->execute()) {
-            return $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+            $user = $statement->fetch(\PDO::FETCH_ASSOC);
+            if (empty($user['avatar'])) {
+                $user['avatar'] = '';
+            }
+            return $user;
         }
         return false;
     }
@@ -195,7 +211,7 @@ class Users extends \Blog\Model {
         $statement = $this->db->prepare('SELECT COUNT(`u`.`id`) AS count FROM `users` AS u WHERE `u`.`status` = :status');
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if ($statement->execute()) {
-            $users = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+            $users = $statement->fetch(\PDO::FETCH_ASSOC);
         }
         if (count($users) === 0 || (int) $users['count'] === 0) {
             return false;
@@ -210,12 +226,21 @@ class Users extends \Blog\Model {
 
         $offset = ((int) $params['page'] - 1) * (int) $params['limit'];
         $users = [];
-        $statement = $this->db->prepare('SELECT `u`.* FROM `users` AS u WHERE `u`.`status` = :status LIMIT :limit OFFSET :offset');
+        $statement = $this->db->prepare(
+            implode(' ', ['SELECT `u`.`id`,`u`.`alias`,`u`.`name`,`u`.`email`,`u`.`password`,',
+            '`u`.`status`,`u`.`created_at`,`u`.`updated_at`, IFNULL(`f`.`url`, NULL) AS avatar',
+            'FROM `users` AS u ',
+            ' LEFT JOIN `files` AS f ON `f`.`user_id` = `u`.`id` AND `f`.`id` = `u`.`avatar`',
+            'WHERE `u`.`id` = :user_id AND `u`.`status` = :status LIMIT :limit OFFSET :offset'])
+        );
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
-        $statement->bindParam(':limit', (int) $params['limit'], \PDO::PARAM_INT);
+        $statement->bindParam(':limit', $params['limit'], \PDO::PARAM_INT);
         $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+                if (empty($row['avatar'])) {
+                    $row['avatar'] = '';
+                }
                 array_push($users, $row);
             }
         }
