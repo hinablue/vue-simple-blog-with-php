@@ -1,0 +1,64 @@
+<template lang="pug">
+  b-row.justify-content-md-center.login
+    b-col(cols="4")
+      h4 Login
+      b-form
+        b-form-group(label="E-mail", label-for="email")
+          b-form-input(id="email", type="email", v-model.trim="form.email", required, placeholder="Your email")
+        b-form-group(label="Password", label-for="password")
+          b-form-input(id="password", type="password", v-model.trim="form.password", required, placeholder="Your password")
+        b-button.btn.btn-success(type="button", @click.prevent="login") Login
+</template>
+
+<script>
+import usersAPI from '@/api/users'
+import {
+  bRow,
+  bCol,
+  bImg,
+  bForm,
+  bFormInput,
+  bFormGroup,
+  bButton
+} from 'bootstrap-vue/lib/components'
+
+export default {
+  name: 'login',
+  components: {
+    bRow: bRow,
+    bCol: bCol,
+    bImg: bImg,
+    bForm: bForm,
+    bFormInput: bFormInput,
+    bFormGroup: bFormGroup,
+    bButton: bButton
+  },
+  methods: {
+    login () {
+      if (this.form.email === '') {
+        return false
+      }
+      if (this.form.password === '') {
+        return false
+      }
+
+      usersAPI.login(this.form)
+        .then(res => {
+          this.$router.push({
+            name: 'Entries'
+          })
+        }, err => {
+          console.log(err)
+        })
+    }
+  },
+  data () {
+    return {
+      form: {
+        email: '',
+        password: ''
+      }
+    }
+  }
+}
+</script>

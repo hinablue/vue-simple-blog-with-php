@@ -340,10 +340,11 @@ try {
         }
 
         $posts = new Posts($app);
-        if ($posts->add($data)) {
+        if (false !== ($post_id = $posts->add($data))) {
             return [[
                 'status' => 'ok',
-                'messages' => 'Succeeded'
+                'messages' => 'Succeeded',
+                'results' => $post_id
             ], 200];
         } else {
             return [[
