@@ -124,7 +124,7 @@ class Users extends \Blog\Model {
         $this->db->beginTransaction();
         try {
             $id = $this->uuid($this->root, microtime());
-            $alias = $this->sulgify($data['name']);
+            $alias = $this->getAlias($data['name']);
             if (empty($alias)) {
                 $alias = $this->uuid($id, microtime());
             }
@@ -249,5 +249,32 @@ class Users extends \Blog\Model {
             'totalItems' => (int) $totalItems,
             'totalPages' => (int) $totalPages
         ] : false;
+    }
+
+    private function getAlias($alias) {
+        $alias = $this->sulgify($alias);
+
+        $statement = $this->db->prepare('SELECT `alias` FROM `users` WHERE `alias` = :alias LIMIT 1');
+        $statement->bindParam(':alias', $alias, \PDO::PARAM_STR);
+        if ($statement->execute()) {
+            $result = $statement->fetch(\PDO::FETCH_ASSOC);
+            if ($result && $result['alias'] === $alias) {
+                $statement->closeCursor();
+
+                $like_alias = $alias . '-%';
+                $statement = $this->db->prepare('SELECT `alias` FROM `users` WHERE `alias` LIKE :like_alias OR `alias` = :alias ORDER BY LENGTH(`alias`) DESC, `alias` DESC LIMIT 1');
+                $statement->bindParam(':like_alias', $like_alias, \PDO::PARAM_STR);
+                $statement->bindParam(':alias', $alias, \PDO::PARAM_STR);
+                if ($statement->execute()) {
+                    $result = $statement->fetch(\PDO::FETCH_ASSOC);
+                    if ($result && !empty($result['alias'])) {
+                        $counter = '-' . ((int) substr(strrchr($result['alias'], '-'), 1) + 1);
+                        $alias = mb_substr($alias, 0, 200 - mb_strlen($counter)) . $counter;
+                    }
+                }
+            }
+        }
+
+        return $alas;
     }
 }

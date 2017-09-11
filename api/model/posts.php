@@ -113,13 +113,13 @@ class Posts extends \Blog\Model {
         $this->db->beginTransaction();
         try {
             $id = $this->uuid($this->root, microtime());
-            $alias = $this->sulgify($data['title']);
+            $alias = $this->getAlias($data['title']);
             if (empty($alias)) {
                 $alias = $this->uuid($id, microtime());
             }
 
             $html = $data['html'];
-            $status = isset($data['published']) ? 'published' : 'draft';
+            $status = isset($data['published']) && $data['published'] === true ? 'published' : 'draft';
 
             $statement = $this->db->prepare(
                 'INSERT INTO `posts` (`id`,`alias`,`title`,`markdown`,`html`,`status`) VALUES' .
@@ -158,36 +158,122 @@ class Posts extends \Blog\Model {
     }
 
     public function getByUserId($user_id) {
-        $posts = [];
+        $params = array_merge([
+            'limit' => 10,
+            'page' => 1,
+            'user_id' => ''
+        ], $params);
+
+        if (empty($params['user_id'])) {
+            return false;
+        }
+
+        $params['page'] = (int) $params['page'];
+        $params['limit'] = (int) $params['limit'];
+
         $status = 'published';
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p INNER JOIN `user_posts` AS up ON `up`.`post_id` = `p`.`post_id` WHERE `p`.`status` = :status AND `up`.`user_id` = :user_id LIMIT 10');
-        $statement->bindParam(':user_id', $user_id, \PDO::PARAM_STR);
+        $posts = [];
+        $statement = $this->db->prepare(
+            implode(' ', [
+                'SELECT COUNT(*) AS count FROM `user_posts` AS up',
+                'INNER JOIN `posts` AS p ON `p`.`id` = `up`.`post_id`',
+                'WHERE `p`.`status` = :status AND `up`.`user_id` = :user_id'
+            ])
+        );
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        $statement->bindParam(':user_id', $params['user_id'], \PDO::PARAM_STR);
+        if ($statement->execute()) {
+            $posts = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT);
+        }
+        if (count($posts) === 0 || (int) $posts['count'] === 0) {
+            return false;
+        }
+
+        $totalItems = (int) $totalItems;
+        $totalPages = (int) ceil($totalItems / $params['limit']);
+
+        if ($params['page'] > ceil($totalItems / $params['limit']) || $params['page'] < 1) {
+            return false;
+        }
+
+        $offset = ($params['page'] - 1) * $params['limit'];
+        $posts = [];
+        $statement = $this->db->prepare(
+            implode(' ', [
+                'SELECT `p`.*, `u`.`alias` AS user_alias, `u`.`name` AS user_name,',
+                'IFNULL((SELECT `f`.`url` FROM `files` AS f WHERE `f`.`user_id` = `u`.`id` AND `f`.`id` = `u`.`avatar` LIMIT 1), NULL) AS user_avatar,',
+                'IFNULL((SELECT `f`.`url` FROM `files` AS f INNER JOIN `post_files` AS pf ON `pf`.`file_id` = `f`.`id` WHERE `pf`.`post_id` = `up`.`post_id` AND `f`.`user_id` = `up`.`user_id` LIMIT 1), NULL) AS cover',
+                'FROM `user_posts` AS up',
+                'INNER JOIN `users` AS u ON `u`.`id` = `up`.`user_id`',
+                'INNER JOIN `posts` AS p ON `p`.`id` = `up`.`post_id`',
+                'WHERE `u`.`status` = :actived AND `p`.`status` = :published',
+                'AND `up`.`user_id` = :user_id',
+                'ORDER BY `p`.`created_at` DESC',
+                'LIMIT :limit OFFSET :offset'
+            ])
+        );
+        $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        $statement->bindParam(':user_id', $params['user_id'], \PDO::PARAM_STR);
+        $statement->bindParam(':limit', $params['limit'], \PDO::PARAM_INT);
+        $statement->bindParam(':offset', $offset, \PDO::PARAM_INT);
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
+                $row['text'] = str_replace(["\n", "\r", "\r\n"], ' ', strip_tags($row['html']));
                 array_push($posts, $row);
             }
         }
-        return count($posts) > 0 ? $posts : false;
+        return count($posts) > 0 ? [
+            'items' => $posts,
+            'totalItems' => $totalItems,
+            'totalPages' => $totalPages
+        ] : false;
     }
 
     public function getById($post_id) {
-        $status = 'published';
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`id` = :post_id LIMIT 1');
+        $user_status = 'actived';
+        $post_status = 'published';
+        $statement = $this->db->prepare(
+            implode(' ', [
+                'SELECT `p`.*, `u`.`alias` AS user_alias, `u`.`name` AS user_name,',
+                'IFNULL((SELECT `f`.`url` FROM `files` AS f WHERE `f`.`user_id` = `u`.`id` AND `f`.`id` = `u`.`avatar` LIMIT 1), NULL) AS user_avatar,',
+                'IFNULL((SELECT `f`.`url` FROM `files` AS f INNER JOIN `post_files` AS pf ON `pf`.`file_id` = `f`.`id` WHERE `pf`.`post_id` = `up`.`post_id` AND `f`.`user_id` = `up`.`user_id` LIMIT 1), NULL) AS cover',
+                'FROM `user_posts` AS up',
+                'INNER JOIN `users` AS u ON `u`.`id` = `up`.`user_id`',
+                'INNER JOIN `posts` AS p ON `p`.`id` = `up`.`post_id`',
+                'WHERE `u`.`status` = :actived AND `p`.`status` = :published',
+                'AND `p`.`id` = :post_id',
+                'LIMIT 1'
+            ])
+        );
         $statement->bindParam(':post_id', $post_id, \PDO::PARAM_STR);
-        $statement->bindParam(':status', $status, \PDO::PARAM_STR);
+        $statement->bindParam(':published', $post_status, \PDO::PARAM_STR);
+        $statement->bindParam(':actived', $user_status, \PDO::PARAM_STR);
         if ($statement->execute()) {
-            return $statement->fetch(\PDO::FETCH_ASSOC);
+            $post = $statement->fetch(\PDO::FETCH_ASSOC);
+            if ($post) {
+                $post['cover'] = empty($post['cover']) ? '' : $post['cover'];
+                $post['author'] = [
+                    'name' => $post['user_name'],
+                    'alias' => $post['user_alias'],
+                    'avatar' => empty($post['user_avatar']) ? '' : $post['user_avatar']
+                ];
+                unset($post['user_name']);
+                unset($post['user_alias']);
+                unset($post['user_avatar']);
+
+                return $post;
+            }
         }
         return false;
     }
     public function getByAlias($alias) {
         $status = 'published';
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`alias` = :alias LIMIT 1');
+        $statement = $this->db->prepare('SELECT `id` FROM `posts` WHERE `alias` = :alias AND `status` = :status LIMIT 1');
         $statement->bindParam(':alias', $alias, \PDO::PARAM_STR);
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         if ($statement->execute()) {
-            return $statement->fetch(\PDO::FETCH_ASSOC);
+            $post = $statement->fetch(\PDO::FETCH_ASSOC);
+            return $this->getById($post['id']);
         }
         return false;
     }
@@ -208,7 +294,13 @@ class Posts extends \Blog\Model {
 
         $status = 'published';
         $posts = [];
-        $statement = $this->db->prepare('SELECT COUNT(`p`.`id`) AS count FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title');
+        $statement = $this->db->prepare(
+            implode(' ', [
+                'SELECT COUNT(*) AS count FROM `user_posts` AS up',
+                'INNER JOIN `posts` AS p ON `p`.`id` = `up`.`post_id`',
+                'WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title'
+            ])
+        );
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         $statement->bindParam(':title', $params['q'], \PDO::PARAM_STR);
         if ($statement->execute()) {
@@ -227,7 +319,20 @@ class Posts extends \Blog\Model {
 
         $offset = ($params['page'] - 1) * $params['limit'];
         $posts = [];
-        $statement = $this->db->prepare('SELECT `p`.* FROM `posts` AS p WHERE `p`.`status` = :status AND `p`.`title` RLIKE :title LIMIT :limit OFFSET :offset');
+        $statement = $this->db->prepare(
+            implode(' ', [
+                'SELECT `p`.*, `u`.`alias` AS user_alias, `u`.`name` AS user_name,',
+                'IFNULL((SELECT `f`.`url` FROM `files` AS f WHERE `f`.`user_id` = `u`.`id` AND `f`.`id` = `u`.`avatar` LIMIT 1), NULL) AS user_avatar,',
+                'IFNULL((SELECT `f`.`url` FROM `files` AS f INNER JOIN `post_files` AS pf ON `pf`.`file_id` = `f`.`id` WHERE `pf`.`post_id` = `up`.`post_id` AND `f`.`user_id` = `up`.`user_id` LIMIT 1), NULL) AS cover',
+                'FROM `user_posts` AS up',
+                'INNER JOIN `users` AS u ON `u`.`id` = `up`.`user_id`',
+                'INNER JOIN `posts` AS p ON `p`.`id` = `up`.`post_id`',
+                'WHERE `u`.`status` = :actived AND `p`.`status` = :published',
+                'AND `p`.`title` RLIKE :title',
+                'ORDER BY `p`.`created_at` DESC',
+                'LIMIT :limit OFFSET :offset'
+            ])
+        );
         $statement->bindParam(':status', $status, \PDO::PARAM_STR);
         $statement->bindParam(':title', $params['q'], \PDO::PARAM_STR);
         $statement->bindParam(':limit', $params['limit'], \PDO::PARAM_INT);
@@ -235,6 +340,15 @@ class Posts extends \Blog\Model {
         if ($statement->execute()) {
             while ($row = $statement->fetch(\PDO::FETCH_ASSOC, \PDO::FETCH_ORI_NEXT)) {
                 $row['text'] = str_replace(["\n", "\r", "\r\n"], ' ', strip_tags($row['html']));
+                $row['cover'] = empty($row['cover']) ? '' : $row['cover'];
+                $row['author'] = [
+                    'name' => $row['user_name'],
+                    'alias' => $row['user_alias'],
+                    'avatar' => empty($row['user_avatar']) ? '' : $row['user_avatar']
+                ];
+                unset($row['user_name']);
+                unset($row['user_alias']);
+                unset($row['user_avatar']);
                 array_push($posts, $row);
             }
         }
@@ -287,6 +401,7 @@ class Posts extends \Blog\Model {
                 'SELECT `p`.* FROM `user_posts` AS up',
                 'INNER JOIN `posts` AS p ON `p`.`id` = `up`.`post_id`',
                 'WHERE `p`.`status` != :status AND `up`.`user_id` = :user_id',
+                'ORDER BY `p`.`created_at` DESC',
                 'LIMIT :limit OFFSET :offset'
             ])
         );
@@ -354,6 +469,7 @@ class Posts extends \Blog\Model {
                 'INNER JOIN `users` AS u ON `u`.`id` = `up`.`user_id`',
                 'INNER JOIN `posts` AS p ON `p`.`id` = `up`.`post_id`',
                 'WHERE `u`.`status` = :actived AND `p`.`status` = :published',
+                'ORDER BY `p`.`created_at` DESC',
                 'LIMIT :limit OFFSET :offset'
             ])
         );
@@ -381,5 +497,32 @@ class Posts extends \Blog\Model {
             'totalItems' => $totalItems,
             'totalPages' => $totalPages
         ] : false;
+    }
+
+    private function getAlias($alias) {
+        $alias = $this->sulgify($alias);
+
+        $statement = $this->db->prepare('SELECT `alias` FROM `posts` WHERE `alias` = :alias LIMIT 1');
+        $statement->bindParam(':alias', $alias, \PDO::PARAM_STR);
+        if ($statement->execute()) {
+            $result = $statement->fetch(\PDO::FETCH_ASSOC);
+            if ($result && $result['alias'] === $alias) {
+                $statement->closeCursor();
+
+                $like_alias = $alias . '-%';
+                $statement = $this->db->prepare('SELECT `alias` FROM `posts` WHERE `alias` LIKE :like_alias OR `alias` = :alias ORDER BY LENGTH(`alias`) DESC, `alias` DESC LIMIT 1');
+                $statement->bindParam(':like_alias', $like_alias, \PDO::PARAM_STR);
+                $statement->bindParam(':alias', $alias, \PDO::PARAM_STR);
+                if ($statement->execute()) {
+                    $result = $statement->fetch(\PDO::FETCH_ASSOC);
+                    if ($result && !empty($result['alias'])) {
+                        $counter = '-' . ((int) substr(strrchr($result['alias'], '-'), 1) + 1);
+                        $alias = mb_substr($alias, 0, 200 - mb_strlen($counter)) . $counter;
+                    }
+                }
+            }
+        }
+
+        return $alias;
     }
 }
