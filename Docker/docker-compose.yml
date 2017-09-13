@@ -26,7 +26,7 @@ services:
       - frontend
       - backend
     environment:
-      BLOG_DB_HOST: mysql:3306
+      BLOG_DB_HOST: mysql
       BLOG_DB_USER: root
       BLOG_DB_PASSWORD: bhunter
     volumes:

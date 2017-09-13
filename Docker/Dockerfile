@@ -19,9 +19,6 @@ COPY nginx.conf /etc/nginx/nginx.conf
 COPY blog.conf /etc/nginx/sites-available/default
 COPY www.conf /etc/php/7.1/fpm/pool.d/www.conf
 COPY php.ini /etc/php/7.1/fpm/php.ini
-COPY docker-entrypoint.sh docker-entrypoint.sh
 COPY start.sh start.sh
-
-ENTRYPOINT ["bash", "docker-entrypoint.sh"]
 
 CMD ["bash", "start.sh"]

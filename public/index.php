@@ -18,6 +18,10 @@ use Blog\Model\PostFiles;
 $di = new Di();
 
 try {
+    if (!file_exists(APPLICATION . DS . 'logs')) {
+        mkdir(APPLICATION . DS . 'logs', 0755, true);
+    }
+
     $di->set('config', function() {
         require APPLICATION . DS . 'configs' . DS . 'config.php';
         return (object) $configs;
@@ -594,6 +598,8 @@ try {
 
     echo $blog->run();
 } catch (\Exception $e) {
+    file_put_contents(APPLICATION . DS . 'logs' . DS . 'api.log', $e->getMessage().PHP_EOL.$e->getTraceAsString().PHP_EOL, FILE_APPEND);
+
     $datetime = gmdate("D, d M Y H:i:s").' GMT';
     header('Pragma: no-cache');
     header('Cache-Control: no-cache, private, no-store, must-revalidate, pre-check=0, post-check=0, max-age=0, max-stale=0');

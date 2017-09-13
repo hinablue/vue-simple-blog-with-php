@@ -66,6 +66,8 @@ if [ ! -d "/var/www/vue-blog/.git" ]; then
  fi
 fi
 
+env | sed "s/\(.*\)=\(.*\)/env[\1]='\2'/" >> /etc/php/7.1/fpm/pool.d/www.conf
 mysql -uroot -pbhunter -hmysql < schema.sql
-nginx
-php-fpm7.1 -F
+php-fpm7.1 -D
+nginx -g 'daemon off;'
+

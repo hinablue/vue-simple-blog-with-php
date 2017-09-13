@@ -2,9 +2,9 @@
 
 $configs = [
     'database' => [
-        'host' => 'mysql',
-        'username' => 'root',
-        'password' => 'bhunter',
+        'host' => getenv('BLOG_DB_HOST') ?? 'mysql',
+        'username' => getenv('BLOG_DB_USER') ?? 'root',
+        'password' => getenv('BLOG_DB_PASSWORD') ?? 'bhunter',
         'database' => 'vue-blog',
         'port' => 3306
     ],
