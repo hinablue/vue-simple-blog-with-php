@@ -4,6 +4,7 @@ public/data
 public/static
 public/index.html
 public/service-worker.js
+api/logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
