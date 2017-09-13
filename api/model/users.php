@@ -275,6 +275,6 @@ class Users extends \Blog\Model {
             }
         }
 
-        return $alas;
+        return $alias;
     }
 }

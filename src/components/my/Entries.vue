@@ -176,10 +176,27 @@ export default {
             html: this.story.html,
             published: type === 'publish'
           })
+          this.$swal({
+            type: 'success',
+            title: 'OK'
+          })
         }, err => {
-          console.log(err)
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: err.messages
+          })
         })
       } else {
+        if (String(this.story.title).length === 0) {
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: 'Please fill your story title'
+          })
+          return false
+        }
+
         postsAPI.addPost({
           title: this.story.title,
           markdown: this.story.markdown,
@@ -193,8 +210,16 @@ export default {
             html: this.story.html,
             published: type === 'publish'
           })
+          this.$swal({
+            type: 'success',
+            title: 'OK'
+          })
         }, err => {
-          console.log(err)
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: err.messages
+          })
         })
       }
     },
@@ -211,7 +236,11 @@ export default {
           this.$refs.editor.$imgUpdateByUrl(filename, res.results.url)
           this.$refs.editor.$img2Url(filename, res.results.url)
         }, err => {
-          console.log(err)
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: err.messages
+          })
         })
     }
   },

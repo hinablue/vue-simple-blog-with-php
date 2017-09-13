@@ -73,11 +73,21 @@ export default {
         const file = avatar.files[0]
         if (file.size > 5 * 1024 * 1024 || file.size === 0) {
           this.avatarFileError = true
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: 'File size is too large (5MB)'
+          })
           return false
         }
 
         if (!/image\/(png|jpeg|gif)/i.test(file.type)) {
           this.avatarFileError = true
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: 'File type is not an image (png/jpg/gif)'
+          })
           return false
         }
 
@@ -100,12 +110,27 @@ export default {
   methods: {
     save () {
       if (this.avatarFileError) {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please pick up the avatar image'
+        })
         return false
       }
       if (this.form.name === '') {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please fill your name'
+        })
         return false
       }
       if (this.form.email === '') {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please fill your e-mail account'
+        })
         return false
       }
 
@@ -118,34 +143,72 @@ export default {
             data.append('file', document.getElementById('avatar').files[0])
             uploaderAPI.upload(data)
               .then(res => {
-                console.log(res)
+                this.$swal({
+                  type: 'success',
+                  title: 'OK'
+                })
               }, err => {
-                console.log(err)
+                this.$swal({
+                  type: 'warning',
+                  title: 'Oops!',
+                  text: err.messages
+                })
               })
           }
         }, err => {
-          console.log(err)
+          this.$swal({
+            type: 'warning',
+            title: 'Oops!',
+            text: err.messages
+          })
         })
     },
     changePassword () {
       if (this.password.oldPassword === '') {
+        this.$swal({
+          type: 'warning',
+          title: 'Oops!',
+          text: 'Please fill your old password'
+        })
         return false
       }
       if (this.password.newPassword === '') {
+        this.$swal({
+          type: 'warning',
+          title: 'Oops!',
+          text: 'Please fill your new password'
+        })
         return false
       }
       if (this.password.repeatPassword === '') {
+        this.$swal({
+          type: 'warning',
+          title: 'Oops!',
+          text: 'Please repeat your new password'
+        })
         return false
       }
       if (this.password.repeatPassword !== this.password.newPassword) {
+        this.$swal({
+          type: 'warning',
+          title: 'Oops!',
+          text: 'New password and repeat password are not the same'
+        })
         return false
       }
 
       usersAPI.changePassword(this.password)
         .then(res => {
-          console.log(res)
+          this.$swal({
+            type: 'success',
+            title: 'OK'
+          })
         }, err => {
-          console.log(err)
+          this.$swal({
+            type: 'warning',
+            title: 'Oops!',
+            text: err.messages
+          })
         })
     }
   },

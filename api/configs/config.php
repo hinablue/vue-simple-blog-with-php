@@ -2,9 +2,9 @@
 
 $configs = [
     'database' => [
-        'host' => '127.0.0.1',
+        'host' => 'mysql',
         'username' => 'root',
-        'password' => 'caline0125',
+        'password' => 'bhunter',
         'database' => 'vue-blog',
         'port' => 3306
     ],

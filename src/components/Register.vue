@@ -66,16 +66,36 @@ export default {
   },
   methods: {
     register () {
-      if (this.avatarFileError) {
+      if (this.avatarFileError || !this.previewAvatar) {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please pick up the avatar image'
+        })
         return false
       }
       if (this.form.name === '') {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please fill your name'
+        })
         return false
       }
       if (this.form.email === '') {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please fill your e-mail account'
+        })
         return false
       }
       if (this.form.password === '') {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please fill your password'
+        })
         return false
       }
 
@@ -86,12 +106,31 @@ export default {
           data.append('file', document.getElementById('avatar').files[0])
           uploaderAPI.upload(data)
             .then(res => {
-              console.log(res)
+              this.$router.push({
+                name: 'Entries'
+              })
             }, err => {
-              console.log(err)
+              this.$swal({
+                type: 'warning',
+                title: 'Oops!',
+                text: err.messages,
+                showCancelButton: false,
+                allowOutsideClick: false,
+                allowEscapeKey: false,
+                allowEnterKey: false,
+                confirmButtonText: 'Next'
+              }).then(() => {
+                this.$router.push({
+                  name: 'Entries'
+                })
+              })
             })
         }, err => {
-          console.log(err)
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: err.messages
+          })
         })
     }
   },

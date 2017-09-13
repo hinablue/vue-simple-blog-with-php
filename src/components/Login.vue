@@ -36,9 +36,19 @@ export default {
   methods: {
     login () {
       if (this.form.email === '') {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please fill the e-mail account'
+        })
         return false
       }
       if (this.form.password === '') {
+        this.$swal({
+          type: 'error',
+          title: 'Oops!',
+          text: 'Please fill your password'
+        })
         return false
       }
 
@@ -48,7 +58,11 @@ export default {
             name: 'Entries'
           })
         }, err => {
-          console.log(err)
+          this.$swal({
+            type: 'error',
+            title: 'Oops!',
+            text: err.messages
+          })
         })
     }
   },

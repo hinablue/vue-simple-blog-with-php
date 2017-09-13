@@ -1,7 +1,8 @@
 <template lang="pug">
   b-row.homepage
-    header
+    b-col.header(cols="12")
       router-link(tag="h1", :to="{ name: 'Homepage' }") My Stories
+    b-col.section(cols="12")
     b-card-group(columns)
       b-card(v-for="post in posts",
         :key="post.id",
