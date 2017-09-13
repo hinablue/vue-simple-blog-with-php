@@ -1,9 +1,15 @@
 version: '3'
 
+networks:
+  frontend:
+  backend:
+
 services:
   mysql:
     container_name: bhunter-mysql
     image: mysql:5.7
+    networks:
+      - backend
     environment:
       MYSQL_ROOT_PASSWORD: bhunter
       MYSQL_DATABASE: vue-blog
@@ -16,6 +22,9 @@ services:
       dockerfile: Dockerfile
     depends_on:
       - mysql
+    networks:
+      - frontend
+      - backend
     environment:
       BLOG_DB_HOST: mysql:3306
       BLOG_DB_USER: root
