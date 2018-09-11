@@ -6,7 +6,7 @@ RUN apk update \
 	build-base \
 	nginx \
         imagemagick \
-	php7 php7-fpm php7-opcache php7-mbstring php7-curl php7-mcrypt php7-intl php7-mysqli php7-session php7-gettext php7-imagick-dev php7-pdo php7-pdo_mysql php7-json
+	php7 php7-fpm php7-opcache php7-mbstring php7-curl php7-mcrypt php7-intl php7-mysqli php7-session php7-gettext php7-imagick-dev php7-pdo php7-pdo_mysql php7-json mariadb-client
 
 COPY schema.sql schema.sql
 COPY nginx.conf /etc/nginx/nginx.conf
