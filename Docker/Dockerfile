@@ -1,24 +1,18 @@
-FROM ubuntu:xenial
+FROM gliderlabs/alpine:3.6
 
-ENV LANG=C.UTF-8
-
-RUN set -x \
-	&& apt-get update \
-	&& apt-get install --no-install-recommends --no-install-suggests -y software-properties-common python-software-properties gnupg2 dirmngr
-
-RUN set -x \
-	&& add-apt-repository -y ppa:ondrej/php \
-    && add-apt-repository -y ppa:nginx/stable \
-    && apt-get update
-
-RUN set -x \
-    && apt-get install --no-install-recommends --no-install-suggests -y php7.1-common php7.1-fpm php7.1-mbstring php7.1-curl php7.1-mcrypt php7.1-intl php7.1-mysql nginx-full mysql-client git
+RUN apk update \
+	&& apk upgrade \
+	&& apk add --update \
+	build-base \
+	nginx \
+        imagemagick \
+	php7 php7-fpm php7-opcache php7-mbstring php7-curl php7-mcrypt php7-intl php7-mysqli php7-session php7-gettext php7-imagick-dev php7-pdo php7-pdo_mysql php7-json
 
 COPY schema.sql schema.sql
 COPY nginx.conf /etc/nginx/nginx.conf
-COPY blog.conf /etc/nginx/sites-available/default
-COPY www.conf /etc/php/7.1/fpm/pool.d/www.conf
-COPY php.ini /etc/php/7.1/fpm/php.ini
+COPY blog.conf /etc/nginx/conf.d/default.conf
+COPY www.conf /etc/php7/php-fpm.d/www.conf
+COPY php.ini /etc/php7/php.ini
 COPY start.sh start.sh
 
-CMD ["bash", "start.sh"]
+CMD ["sh", "start.sh"]

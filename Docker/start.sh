@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/sh
 
 mkdir -p -m 0700 /root/.ssh
 
@@ -66,8 +66,8 @@ if [ ! -d "/var/www/vue-blog/.git" ]; then
  fi
 fi
 
-env | sed "s/\(.*\)=\(.*\)/env[\1]='\2'/" >> /etc/php/7.1/fpm/pool.d/www.conf
+env | sed "s/\(.*\)=\(.*\)/env[\1]='\2'/" >> /etc/php7/php-fpm.d/www.conf
 mysql -uroot -pbhunter -hmysql < schema.sql
-php-fpm7.1 -D
+php-fpm7 -D
 nginx -g 'daemon off;'
 

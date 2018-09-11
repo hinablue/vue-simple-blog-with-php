@@ -6,8 +6,9 @@ networks:
 
 services:
   mysql:
-    container_name: bhunter-mysql
-    image: mysql:5.7
+    container_name: vue-blog-mysql
+    image: mariadb:10.2
+    restart: unless-stopped
     networks:
       - backend
     environment:
@@ -16,7 +17,7 @@ services:
       MYSQL_USER: root
       MYSQL_PASSWORD: bhunter
   server:
-    container_name: bhunter-server
+    container_name: vue-blog-server
     build:
       context: .
       dockerfile: Dockerfile
