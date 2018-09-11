@@ -16,25 +16,9 @@
 <script>
 import postsAPI from '@/api/posts'
 import { distanceInWordsToNow, parse } from 'date-fns'
-import {
-  bRow,
-  bContainer,
-  bCol,
-  bImg,
-  bNavbar,
-  bNavbarBrand
-} from 'bootstrap-vue/lib/components'
 
 export default {
   name: 'entry',
-  components: {
-    bRow: bRow,
-    bContainer: bContainer,
-    bCol: bCol,
-    bImg: bImg,
-    bNavbar: bNavbar,
-    bNavbarBrand: bNavbarBrand
-  },
   beforeRouteEnter (to, from, next) {
     postsAPI.fetchPostByAlias(to.params.alias)
       .then(res => {

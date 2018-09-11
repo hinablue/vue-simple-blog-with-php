@@ -12,27 +12,9 @@
 
 <script>
 import usersAPI from '@/api/users'
-import {
-  bRow,
-  bCol,
-  bImg,
-  bForm,
-  bFormInput,
-  bFormGroup,
-  bButton
-} from 'bootstrap-vue/lib/components'
 
 export default {
   name: 'login',
-  components: {
-    bRow: bRow,
-    bCol: bCol,
-    bImg: bImg,
-    bForm: bForm,
-    bFormInput: bFormInput,
-    bFormGroup: bFormGroup,
-    bButton: bButton
-  },
   methods: {
     login () {
       if (this.form.email === '') {

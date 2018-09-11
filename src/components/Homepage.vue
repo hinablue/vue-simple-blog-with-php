@@ -19,35 +19,18 @@
           b-card-footer
             .user-avatar.mr-2(:style="avatarStyles(post.author.avatar)")
             small {{ post.author.name }}
-      infinite-loading(ref="infiniteLoading", spinner="circles", :on-infinite="onInfinite")
+      infinite-loading(ref="infiniteLoading", spinner="circles", @infinite="onInfinite")
         span(slot="no-results")
 </template>
 
 <script>
 import postsAPI from '@/api/posts'
 import { distanceInWordsToNow, parse } from 'date-fns'
-import {
-  bRow,
-  bCard,
-  bCardBody,
-  bCardFooter,
-  bCardImg,
-  bCardGroup,
-  bImg
-} from 'bootstrap-vue/lib/components'
-
 import InfiniteLoading from 'vue-infinite-loading'
 
 export default {
   name: 'homepage',
   components: {
-    bRow: bRow,
-    bCard: bCard,
-    bCardBody: bCardBody,
-    bCardFooter: bCardFooter,
-    bCardImg: bCardImg,
-    bCardGroup: bCardGroup,
-    bImg: bImg,
     infiniteLoading: InfiniteLoading
   },
   beforeRouteEnter (to, from, next) {

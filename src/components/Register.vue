@@ -5,7 +5,7 @@
       b-form
         b-form-group(label="Avatar", label-for="avatar")
           b-img(v-show="previewAvatar", :src="avatarImage", fluid, alt="avatar")
-          b-form-input(id="avatar", type="file", v-model="form.avatar", required, accept="image/*", placeholder="Your avatar")
+          b-form-file(id="avatar", type="file", v-model="form.avatar", required, accept="image/*", placeholder="Your avatar")
         b-form-group(label="Name", label-for="name")
           b-form-input(id="name", type="text", v-model.trim="form.name", required, placeholder="Your name")
         b-form-group(label="E-mail", label-for="email")
@@ -18,27 +18,9 @@
 <script>
 import usersAPI from '@/api/users'
 import uploaderAPI from '@/api/uploader'
-import {
-  bRow,
-  bCol,
-  bImg,
-  bForm,
-  bFormInput,
-  bFormGroup,
-  bButton
-} from 'bootstrap-vue/lib/components'
 
 export default {
   name: 'register',
-  components: {
-    bRow: bRow,
-    bCol: bCol,
-    bImg: bImg,
-    bForm: bForm,
-    bFormInput: bFormInput,
-    bFormGroup: bFormGroup,
-    bButton: bButton
-  },
   created () {
     this.$watch('form.avatar', () => {
       this.previewAvatar = false

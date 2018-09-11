@@ -32,27 +32,8 @@
 import usersAPI from '@/api/users'
 import uploaderAPI from '@/api/uploader'
 
-import {
-  bRow,
-  bCol,
-  bImg,
-  bForm,
-  bFormInput,
-  bFormGroup,
-  bButton
-} from 'bootstrap-vue/lib/components'
-
 export default {
   name: 'register',
-  components: {
-    bRow: bRow,
-    bCol: bCol,
-    bImg: bImg,
-    bForm: bForm,
-    bFormInput: bFormInput,
-    bFormGroup: bFormGroup,
-    bButton: bButton
-  },
   beforeRouteEnter (to, from, next) {
     usersAPI.getProfile()
       .then(res => {

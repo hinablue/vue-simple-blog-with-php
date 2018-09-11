@@ -17,7 +17,7 @@
           b-media.mb-2(right-align, vertical-align="center")
             h5.mb-0 {{ post.title }}
             small {{ toNow(post.updated_at) }}
-        infinite-loading(ref="infiniteLoading", spinner="circles", :on-infinite="onInfinite")
+        infinite-loading(ref="infiniteLoading", spinner="circles", @infinite="onInfinite")
           span(slot="no-results")
     b-col(cols="9")
       b-row.mt-3(align-v="center")
@@ -48,19 +48,6 @@
 import postsAPI from '@/api/posts'
 import uploaderAPI from '@/api/uploader'
 import { distanceInWordsToNow, parse } from 'date-fns'
-import {
-  bRow,
-  bCol,
-  bMedia,
-  bImg,
-  bBadge,
-  bFormGroup,
-  bFormInput,
-  bListGroup,
-  bListGroupItem,
-  bDropdown,
-  bDropdownItem
-} from 'bootstrap-vue/lib/components'
 
 import 'mavon-editor/dist/css/index.css'
 import { mavonEditor } from 'mavon-editor'
@@ -70,17 +57,6 @@ import InfiniteLoading from 'vue-infinite-loading'
 export default {
   name: 'entries',
   components: {
-    bRow: bRow,
-    bCol: bCol,
-    bMedia: bMedia,
-    bImg: bImg,
-    bBadge: bBadge,
-    bFormGroup: bFormGroup,
-    bFormInput: bFormInput,
-    bListGroup: bListGroup,
-    bListGroupItem: bListGroupItem,
-    bDropdown: bDropdown,
-    bDropdownItem: bDropdownItem,
     infiniteLoading: InfiniteLoading,
     mavonEditor: mavonEditor
   },
