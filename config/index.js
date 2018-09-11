@@ -29,14 +29,14 @@ module.exports = {
     assetsPublicPath: '/',
     proxyTable: {
       '/api': {
-        target: 'http://vueblog.dev',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         pathRewrite: {
           '^/api': '/api'
         }
       },
       '/data': {
-        target: 'http://vueblog.dev',
+        target: 'http://localhost:8080',
         changeOrigin: true,
         pathRewrite: {
           '^/data': '/data'
