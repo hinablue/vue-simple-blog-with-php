@@ -1,26 +1,30 @@
 <template lang="pug">
-  b-row.homepage
-    b-col.header(cols="12")
-      router-link(tag="h1", :to="{ name: 'Homepage' }") My Stories
-    b-col.section(cols="12")
-    b-card-group(columns)
-      b-card(v-for="post in posts",
-        :key="post.id",
-        :img-src="post.cover",
-        :img-alt="post.title",
-        img-top,
-        no-body)
-          router-link.pointer(tag="h4",
-            slot="header",
-            :to="{ name: 'Entry', params: { alias: post.alias }}") {{ post.title }}
-          b-card-body
-            p.card-text(v-html="truncate(post.text)")
-            small.text-muted {{ toNow(post.updated_at) }}
-          b-card-footer
-            .user-avatar.mr-2(:style="avatarStyles(post.author.avatar)")
-            small {{ post.author.name }}
-      infinite-loading(ref="infiniteLoading", spinner="circles", @infinite="onInfinite")
-        span(slot="no-results")
+  b-container(fluid)
+    b-row.homepage
+      b-col.header(cols="12")
+        router-link.my-4(tag="h1", :to="{ name: 'Homepage' }") My Stories
+      b-col.section.mb-4(
+        cols="12",
+        md="6",
+        lg="4",
+        v-for="post in posts",
+        :key="post.id")
+        b-card(:img-src="post.cover",
+          :img-alt="post.title",
+          img-top,
+          no-body)
+            router-link.pointer(tag="h4",
+              slot="header",
+              :to="{ name: 'Entry', params: { alias: post.alias }}") {{ post.title }}
+            b-card-body
+              p.card-text(v-html="truncate(post.text)")
+              small.text-muted {{ toNow(post.updated_at) }}
+            b-card-footer
+              .user-avatar.mr-2(:style="avatarStyles(post.author.avatar)")
+              small {{ post.author.name }}
+      b-col(cols="12")
+        infinite-loading(ref="infiniteLoading", spinner="circles", @infinite="onInfinite")
+          span(slot="no-results")
 </template>
 
 <script>
@@ -48,7 +52,10 @@ export default {
   },
   methods: {
     truncate (string) {
-      return string.substring(0, 120) + '...'
+      if (String(string).length > 300) {
+        return string.substring(0, 300) + '...'
+      }
+      return string
     },
     onInfinite () {
       if (this.currentPage > 0 &&

@@ -1,16 +1,17 @@
 <template lang="pug">
-  b-row.entry
-    b-container
-      b-col(cols="12")
-        b-nav-bar(variant="faded", type="dark")
-          b-navbar-brand(tag="h1", :to="{ name: 'Homepage' }")
-            .user-avatar(:style="avatarStyles(post.author.avatar)")
-            small.pl-2 Home
-      b-col(cols="12")
-        h1.mb-4 {{ post.title }}
-        article(v-html="post.html")
-        hr
-        span Updated at {{ toNow(post.updated_at) }}.
+  .wrapper
+    b-navbar(variant="info", type="dark")
+      b-navbar-brand(tag="h1", :to="{ name: 'Homepage' }")
+        .user-avatar(:style="avatarStyles(post.author.avatar)")
+        small.pl-2 Blog
+    b-row.entry
+      b-container
+        b-col(cols="12")
+          h1.mb-4 {{ post.title }}
+          hr
+          article.entry-article(v-html="post.html")
+          hr
+          span Updated at {{ toNow(post.updated_at) }}.
 </template>
 
 <script>
@@ -73,5 +74,13 @@ export default {
   }
   border-radius: 50%;
   vertical-align: middle;
+}
+.entry-article {
+  /deep/ {
+    img {
+      max-width: 100%;
+      display: block;
+    }
+  }
 }
 </style>

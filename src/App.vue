@@ -1,6 +1,6 @@
 <template lang="pug">
   #app
-    b-container.main(fluid)
+    .main
       router-view
 </template>
 

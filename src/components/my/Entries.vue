@@ -1,47 +1,48 @@
 <template lang="pug">
-  b-row.entries
-    b-col(cols="3")
-      b-row.mt-4(align-v="center")
-        b-col(cols="8")
-          h3 My Stories
-        b-col(cols="4")
-          router-link.pointer.new-story-badge.mt-0.mb-2(tag="div", :to="{ name: 'Entries' }")
-            b-badge(pill, variant="info")
-              i.mdi.mdi-lead-pencil
-      hr
-      b-list-group.entries-list
-        b-list-group-item(:to="{ name: 'Entries', params: { postId: post.id }}",
-          v-for="post in posts.items",
-          :key="post.id",
-          variant="info")
-          b-media.mb-2(right-align, vertical-align="center")
-            h5.mb-0 {{ post.title }}
-            small {{ toNow(post.updated_at) }}
-        infinite-loading(ref="infiniteLoading", spinner="circles", @infinite="onInfinite")
-          span(slot="no-results")
-    b-col(cols="9")
-      b-row.mt-3(align-v="center")
-        b-col(cols="10")
-          b-form-group.story-title-group(label-for="story-title")
-            b-form-input(id="story-title",
-              type="text",
-              size="lg",
-              v-model.trim="story.title",
-              required,
-              placeholder="Your story title")
-        b-col(cols="2")
-          b-dropdown#save.m-md-2(:text="storyStatus", size="sm", variant="info")
-            b-dropdown-item(@click.prevent="saveStory('draft')") Save to draft
-            b-dropdown-item(@click.prevent="saveStory('publish')") Publish
-      b-col(cols="12")
-        mavon-editor.markdown-editor(
-          ref="editor",
-          :toolbars="toolbars",
-          language="en",
-          placeholder="Start your story...",
-          :value="story.markdown",
-          @change="updateStory",
-          @imgAdd="imageUploader")
+  .wrapper.px-3
+    b-row.entries
+      b-col(cols="3")
+        b-row.mt-4(align-v="center")
+          b-col(cols="8")
+            h3 My Stories
+          b-col.text-right(cols="4")
+            router-link.pointer.new-story-badge.mt-0.mb-2(tag="div", :to="{ name: 'Entries' }")
+              b-badge(pill, variant="info")
+                i.mdi.mdi-lead-pencil
+        hr
+        b-list-group.entries-list
+          b-list-group-item(:to="{ name: 'Entries', params: { postId: post.id }}",
+            v-for="post in posts.items",
+            :key="post.id",
+            variant="info")
+            b-media.mb-2(right-align, vertical-align="center")
+              h5.mb-0 {{ post.title }}
+              small {{ toNow(post.updated_at) }}
+          infinite-loading(ref="infiniteLoading", spinner="circles", @infinite="onInfinite")
+            span(slot="no-results")
+      b-col(cols="9")
+        b-row.mt-3(align-v="center")
+          b-col(cols="10")
+            b-form-group.story-title-group(label-for="story-title")
+              b-form-input(id="story-title",
+                type="text",
+                size="lg",
+                v-model.trim="story.title",
+                required,
+                placeholder="Your story title")
+          b-col.text-right(cols="2")
+            b-dropdown#save.m-md-2(:text="storyStatus", size="sm", variant="info")
+              b-dropdown-item(@click.prevent="saveStory('draft')") Save to draft
+              b-dropdown-item(@click.prevent="saveStory('publish')") Publish
+        b-col(cols="12")
+          mavon-editor.markdown-editor(
+            ref="editor",
+            :toolbars="toolbars",
+            language="en",
+            placeholder="Start your story...",
+            :value="story.markdown",
+            @change="updateStory",
+            @imgAdd="imageUploader")
 </template>
 
 <script>

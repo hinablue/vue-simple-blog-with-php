@@ -1,31 +1,34 @@
 <template lang="pug">
-  b-row.justify-content-md-center.register
-    b-col(cols="6")
-      h4 Settings
-      hr
-      b-form
-        h5 Profile
-        b-form-group(label="Avatar", label-for="avatar")
-          .user-avatar(v-show="!previewAvatar", :style="avatarStyles")
-          b-img(v-show="previewAvatar", :src="avatarImage", fluid, alt="avatar")
-          b-form-file(id="avatar", type="file", v-model="form.avatar", required, accept="image/*", placeholder="Your avatar")
-        b-form-group(label="Name", label-for="name")
-          b-form-input(id="name", type="text", v-model.trim="form.name", required, placeholder="Your name")
-        b-form-group(label="E-mail", label-for="email")
-          b-form-input(id="email", type="email", v-model.trim="form.email", required, placeholder="Your email")
-        b-button.btn.btn-success(type="button", @click.prevent="save") Save
+  b-container
+    b-row.justify-content-md-center.register
+      b-col(cols="12")
+        b-breadcrumb(:items="breadcrumb")
+      b-col(cols="12", md="8", lg="6")
+        h4 Settings
+        hr
+        b-form
+          h5 Profile
+          b-form-group(label="Avatar", label-for="avatar")
+            .user-avatar(v-show="!previewAvatar", :style="avatarStyles")
+            b-img(v-show="previewAvatar", :src="avatarImage", fluid, alt="avatar")
+            b-form-file(id="avatar", type="file", v-model="form.avatar", required, accept="image/*", placeholder="Your avatar")
+          b-form-group(label="Name", label-for="name")
+            b-form-input(id="name", type="text", v-model.trim="form.name", required, placeholder="Your name")
+          b-form-group(label="E-mail", label-for="email")
+            b-form-input(id="email", type="email", v-model.trim="form.email", required, placeholder="Your email")
+          b-button.btn.btn-success(type="button", @click.prevent="save") Save
 
-      hr
+        hr
 
-      b-form
-        h5 Change Password
-        b-form-group(label="Old Password", label-for="old-password")
-          b-form-input(id="old-password", type="password", v-model.trim="password.oldPassword", required, placeholder="Your old password")
-        b-form-group(label="New Password", label-for="new-password")
-          b-form-input(id="new-password", type="password", v-model.trim="password.newPassword", required, placeholder="Your new password")
-        b-form-group(label="Repeat New Password", label-for="repeat-password")
-          b-form-input(id="repeat-password", type="password", v-model.trim="password.repeatPassword", required, placeholder="Repeat your new password")
-        b-button.btn.btn-success(type="button", @click.prevent="changePassword") Change
+        b-form
+          h5 Change Password
+          b-form-group(label="Old Password", label-for="old-password")
+            b-form-input(id="old-password", type="password", v-model.trim="password.oldPassword", required, placeholder="Your old password")
+          b-form-group(label="New Password", label-for="new-password")
+            b-form-input(id="new-password", type="password", v-model.trim="password.newPassword", required, placeholder="Your new password")
+          b-form-group(label="Repeat New Password", label-for="repeat-password")
+            b-form-input(id="repeat-password", type="password", v-model.trim="password.repeatPassword", required, placeholder="Repeat your new password")
+          b-button.btn.btn-success(type="button", @click.prevent="changePassword") Change
 </template>
 
 <script>
@@ -208,7 +211,17 @@ export default {
       previewAvatar: false,
       avatarImage: '',
       oldAvatarImage: '',
-      avatarFileError: false
+      avatarFileError: false,
+      breadcrumb: [
+        {
+          text: 'Home',
+          to: { name: 'Homepage' }
+        },
+        {
+          text: 'My Settings',
+          active: true
+        }
+      ]
     }
   }
 }
